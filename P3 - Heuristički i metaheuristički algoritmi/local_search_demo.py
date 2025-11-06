@@ -248,13 +248,24 @@ class LocalSearchDemo:
         for label in self.radio_func.labels:
             label.set_fontsize(11)
         # Kompatibilnost sa različitim verzijama matplotlib-a
-        if hasattr(self.radio_func, 'circles'):
-            for circle in self.radio_func.circles:
-                circle.set_radius(0.08)
-        elif hasattr(self.radio_func, '_buttons'):
-            for circle in self.radio_func._buttons:
-                if hasattr(circle, 'set_radius'):
+        try:
+            if hasattr(self.radio_func, 'circles'):
+                for circle in self.radio_func.circles:
                     circle.set_radius(0.08)
+            elif hasattr(self.radio_func, '_buttons'):
+                # U novijim verzijama _buttons je PathCollection
+                if hasattr(self.radio_func._buttons, 'set_sizes'):
+                    # set_sizes prima površinu (pi * r^2), pa koristimo 200 za veći krug
+                    num_buttons = len(self.radio_func.labels)
+                    self.radio_func._buttons.set_sizes([200] * num_buttons)
+                else:
+                    # Starije verzije gde _buttons je lista
+                    for circle in self.radio_func._buttons:
+                        if hasattr(circle, 'set_radius'):
+                            circle.set_radius(0.08)
+        except (TypeError, AttributeError):
+            # Ako ne uspe, nastavi bez promene veličine krugova
+            pass
 
         # Radio buttons - tip prikaza
         self.radio_plot = RadioButtons(self.ax_radio_plot,
@@ -266,13 +277,24 @@ class LocalSearchDemo:
         for label in self.radio_plot.labels:
             label.set_fontsize(11)
         # Kompatibilnost sa različitim verzijama matplotlib-a
-        if hasattr(self.radio_plot, 'circles'):
-            for circle in self.radio_plot.circles:
-                circle.set_radius(0.08)
-        elif hasattr(self.radio_plot, '_buttons'):
-            for circle in self.radio_plot._buttons:
-                if hasattr(circle, 'set_radius'):
+        try:
+            if hasattr(self.radio_plot, 'circles'):
+                for circle in self.radio_plot.circles:
                     circle.set_radius(0.08)
+            elif hasattr(self.radio_plot, '_buttons'):
+                # U novijim verzijama _buttons je PathCollection
+                if hasattr(self.radio_plot._buttons, 'set_sizes'):
+                    # set_sizes prima površinu (pi * r^2), pa koristimo 200 za veći krug
+                    num_buttons = len(self.radio_plot.labels)
+                    self.radio_plot._buttons.set_sizes([200] * num_buttons)
+                else:
+                    # Starije verzije gde _buttons je lista
+                    for circle in self.radio_plot._buttons:
+                        if hasattr(circle, 'set_radius'):
+                            circle.set_radius(0.08)
+        except (TypeError, AttributeError):
+            # Ako ne uspe, nastavi bez promene veličine krugova
+            pass
 
         # Slider: Delta (veličina koraka)
         ax_slider_delta = plt.axes([0.74, 0.37, 0.15, 0.02])
