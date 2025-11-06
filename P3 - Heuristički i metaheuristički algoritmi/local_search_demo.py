@@ -247,8 +247,14 @@ class LocalSearchDemo:
         # Povećaj veličinu teksta i krugova za radio buttons
         for label in self.radio_func.labels:
             label.set_fontsize(11)
-        for circle in self.radio_func.circles:
-            circle.set_radius(0.08)
+        # Kompatibilnost sa različitim verzijama matplotlib-a
+        if hasattr(self.radio_func, 'circles'):
+            for circle in self.radio_func.circles:
+                circle.set_radius(0.08)
+        elif hasattr(self.radio_func, '_buttons'):
+            for circle in self.radio_func._buttons:
+                if hasattr(circle, 'set_radius'):
+                    circle.set_radius(0.08)
 
         # Radio buttons - tip prikaza
         self.radio_plot = RadioButtons(self.ax_radio_plot,
@@ -259,8 +265,14 @@ class LocalSearchDemo:
         # Povećaj veličinu teksta i krugova za radio buttons
         for label in self.radio_plot.labels:
             label.set_fontsize(11)
-        for circle in self.radio_plot.circles:
-            circle.set_radius(0.08)
+        # Kompatibilnost sa različitim verzijama matplotlib-a
+        if hasattr(self.radio_plot, 'circles'):
+            for circle in self.radio_plot.circles:
+                circle.set_radius(0.08)
+        elif hasattr(self.radio_plot, '_buttons'):
+            for circle in self.radio_plot._buttons:
+                if hasattr(circle, 'set_radius'):
+                    circle.set_radius(0.08)
 
         # Slider: Delta (veličina koraka)
         ax_slider_delta = plt.axes([0.74, 0.37, 0.15, 0.02])
