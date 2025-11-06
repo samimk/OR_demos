@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimizacija izbora laptopa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            height: fit-content;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slider-container {
+            margin-bottom: 15px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .slider-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #764ba2;
+            transform: scale(1.2);
+        }
+
+        .constraint-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .constraint-input input {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .constraint-input span {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            background: white;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .spaces-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .space-box {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #f0f0f0;
+        }
+
+        .space-title {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .space-subtitle {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+            text-align: center;
+            font-style: italic;
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #f0f0f0;
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .laptop-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .laptop-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .laptop-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .laptop-card.recommended {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #f0fff4 0%, #e8f5e9 100%);
+        }
+
+        .laptop-card.pareto-optimal {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8eaf6 100%);
+        }
+
+        .laptop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .laptop-name {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .laptop-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+
+        .badge-recommended {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-pareto {
+            background: #667eea;
+            color: white;
+        }
+
+        .laptop-specs {
+            display: grid;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .spec-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .spec-label {
+            color: #666;
+        }
+
+        .spec-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .laptop-score {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h4 {
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            color: #555;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .mapping-line {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+        }
+
+        .footer-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .footer-author {
+            opacity: 0.9;
+        }
+
+        @media (max-width: 1200px) {
+            .spaces-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖥️ Optimizacija izbora laptopa</h1>
+            <p>Demonstracija višekriterijalne optimizacije: Problemski prostor → Prostor vrijednosti</p>
+        </div>
+
+        <div class="content">
+            <div class="controls">
+                <div class="info-box">
+                    <h4>📊 Koncepti</h4>
+                    <p><strong>Problemski prostor E<sup>n</sup>:</strong> Sve moguće konfiguracije laptopa (alternative).</p>
+                    <p style="margin-top: 8px;"><strong>Prostor vrijednosti E<sup>m</sup>:</strong> Preslikavanje Q(x) - vrijednosti po kriterijima.</p>
+                </div>
+
+                <div class="control-group">
+                    <h3>📐 Prikaz prostora</h3>
+                    
+                    <label style="font-size: 0.85em; color: #666; display: block; margin-bottom: 5px;">Problemski prostor - x-osa:</label>
+                    <select id="problemX">
+                        <option value="price">Cijena (€)</option>
+                        <option value="ram">RAM (GB)</option>
+                        <option value="weight" selected>Težina (kg)</option>
+                        <option value="screen">Dijagonala ekrana (")</option>
+                    </select>
+
+                    <label style="font-size: 0.85em; color: #666; display: block; margin-bottom: 5px;">Problemski prostor - y-osa:</label>
+                    <select id="problemY">
+                        <option value="price" selected>Cijena (€)</option>
+                        <option value="ram">RAM (GB)</option>
+                        <option value="weight">Težina (kg)</option>
+                        <option value="screen">Dijagonala ekrana (")</option>
+                    </select>
+
+                    <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
+
+                    <label style="font-size: 0.85em; color: #666; display: block; margin-bottom: 5px;">Prostor vrijednosti - x-osa:</label>
+                    <select id="valueX">
+                        <option value="price" selected>Cijena (niža bolja)</option>
+                        <option value="cpu">CPU performanse</option>
+                        <option value="gpu">GPU performanse</option>
+                        <option value="battery">Baterija</option>
+                        <option value="weight">Portabilnost (lakši)</option>
+                    </select>
+
+                    <label style="font-size: 0.85em; color: #666; display: block; margin-bottom: 5px;">Prostor vrijednosti - y-osa:</label>
+                    <select id="valueY">
+                        <option value="price">Cijena (niža bolja)</option>
+                        <option value="cpu" selected>CPU performanse</option>
+                        <option value="gpu">GPU performanse</option>
+                        <option value="battery">Baterija</option>
+                        <option value="weight">Portabilnost (lakši)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <h3>🎯 Prioriteti kriterija</h3>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>💰 Cijena (niža bolja)</span>
+                            <span class="slider-value" id="priceWeight">50%</span>
+                        </div>
+                        <input type="range" id="priceSlider" min="0" max="100" value="50">
+                    </div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>⚡ Performanse</span>
+                            <span class="slider-value" id="perfWeight">50%</span>
+                        </div>
+                        <input type="range" id="perfSlider" min="0" max="100" value="50">
+                    </div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>🎮 GPU snaga</span>
+                            <span class="slider-value" id="gpuWeight">30%</span>
+                        </div>
+                        <input type="range" id="gpuSlider" min="0" max="100" value="30">
+                    </div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>🔋 Baterija</span>
+                            <span class="slider-value" id="battWeight">40%</span>
+                        </div>
+                        <input type="range" id="battSlider" min="0" max="100" value="40">
+                    </div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>🪶 Portabilnost (lakši)</span>
+                            <span class="slider-value" id="weightWeight">30%</span>
+                        </div>
+                        <input type="range" id="weightSlider" min="0" max="100" value="30">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>⚙️ Ograničenja (Ω)</h3>
+                    
+                    <div class="constraint-input">
+                        <span>Max cijena:</span>
+                        <input type="number" id="maxPrice" value="2000" min="600" max="3000" step="100">
+                        <span>€</span>
+                    </div>
+
+                    <div class="constraint-input">
+                        <span>Min RAM:</span>
+                        <input type="number" id="minRAM" value="16" min="8" max="64" step="8">
+                        <span>GB</span>
+                    </div>
+
+                    <div class="constraint-input">
+                        <span>Max težina:</span>
+                        <input type="number" id="maxWeight" value="2.5" min="1" max="3" step="0.1">
+                        <span>kg</span>
+                    </div>
+
+                    <div class="constraint-input">
+                        <span>Min baterija:</span>
+                        <input type="number" id="minBattery" value="6" min="4" max="15" step="1">
+                        <span>h</span>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="optimizeLaptop()">🚀 Optimiziraj izbor</button>
+            </div>
+
+            <div class="results">
+                <div class="spaces-container">
+                    <div class="space-box">
+                        <div class="space-title">Problemski prostor (E<sup>n</sup>)</div>
+                        <div class="space-subtitle">Alternative - konfiguracije laptopa</div>
+                        <canvas id="problemSpace"></canvas>
+                    </div>
+
+                    <div class="space-box">
+                        <div class="space-title">Prostor vrijednosti (E<sup>m</sup>)</div>
+                        <div class="space-subtitle">Q(x) - preslikavanje kriterija</div>
+                        <canvas id="valueSpace"></canvas>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #28a745;"></div>
+                        <span>Preporučen laptop (x*)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #667eea;"></div>
+                        <span>Pareto optimalni</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ccc;"></div>
+                        <span>Dominirani</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff6b6b;"></div>
+                        <span>Nedozvoljena rješenja (izvan Ω)</span>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">💻 Pronađeni laptopi</div>
+                    <div class="laptop-cards" id="laptopCards"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-title">Optimizacija resursa | Red. prof. dr Samim Konjicija</div>
+            <div class="footer-author">Sarajevo, 2025. godine</div>
+        </div>
+    </div>
+
+    <script>
+        // Laptopi dataset
+        const laptops = [
+            {name: "Dell XPS 13", price: 1200, cpu: 85, gpu: 40, ram: 16, battery: 12, weight: 1.3, screen: 13.3},
+            {name: "MacBook Air M2", price: 1400, cpu: 90, gpu: 75, ram: 16, battery: 15, weight: 1.2, screen: 13.6},
+            {name: "Lenovo ThinkPad X1", price: 1500, cpu: 88, gpu: 45, ram: 16, battery: 10, weight: 1.4, screen: 14},
+            {name: "ASUS ROG Zephyrus", price: 2200, cpu: 95, gpu: 95, ram: 32, battery: 6, weight: 2.1, screen: 15.6},
+            {name: "HP Pavilion", price: 800, cpu: 65, gpu: 35, ram: 8, battery: 7, weight: 1.8, screen: 15.6},
+            {name: "Acer Aspire 5", price: 650, cpu: 60, gpu: 30, ram: 8, battery: 8, weight: 1.9, screen: 15.6},
+            {name: "MSI Stealth 15", price: 1800, cpu: 92, gpu: 90, ram: 32, battery: 7, weight: 2.0, screen: 15.6},
+            {name: "MacBook Pro 14", price: 2400, cpu: 98, gpu: 85, ram: 32, battery: 17, weight: 1.6, screen: 14.2},
+            {name: "Lenovo Legion 5", price: 1300, cpu: 87, gpu: 85, ram: 16, battery: 5, weight: 2.4, screen: 15.6},
+            {name: "ASUS ZenBook 14", price: 1100, cpu: 80, gpu: 50, ram: 16, battery: 14, weight: 1.4, screen: 14},
+            {name: "Dell Inspiron 15", price: 700, cpu: 62, gpu: 32, ram: 8, battery: 7, weight: 2.0, screen: 15.6},
+            {name: "Razer Blade 15", price: 2800, cpu: 96, gpu: 98, ram: 32, battery: 6, weight: 2.1, screen: 15.6},
+            {name: "Surface Laptop 5", price: 1600, cpu: 86, gpu: 55, ram: 16, battery: 13, weight: 1.3, screen: 13.5},
+            {name: "HP Envy x360", price: 950, cpu: 75, gpu: 48, ram: 16, battery: 10, weight: 1.5, screen: 13.3},
+            {name: "Acer Swift 3", price: 750, cpu: 70, gpu: 38, ram: 8, battery: 11, weight: 1.4, screen: 14},
+        ];
+
+        let problemCanvas = document.getElementById('problemSpace');
+        let valueCanvas = document.getElementById('valueSpace');
+        let ctxProblem = problemCanvas.getContext('2d');
+        let ctxValue = valueCanvas.getContext('2d');
+
+        // Setup sliders
+        const sliders = ['price', 'perf', 'gpu', 'batt', 'weight'];
+        sliders.forEach(type => {
+            const slider = document.getElementById(type + 'Slider');
+            const display = document.getElementById(type + 'Weight');
+            slider.addEventListener('input', (e) => {
+                display.textContent = e.target.value + '%';
+            });
+        });
+
+        // Setup axis change listeners
+        ['problemX', 'problemY', 'valueX', 'valueY'].forEach(id => {
+            document.getElementById(id).addEventListener('change', optimizeLaptop);
+        });
+
+        function getAxisValue(laptop, axis) {
+            const mapping = {
+                'price': laptop.price,
+                'cpu': laptop.cpu,
+                'gpu': laptop.gpu,
+                'ram': laptop.ram,
+                'battery': laptop.battery,
+                'weight': laptop.weight,
+                'screen': laptop.screen
+            };
+            return mapping[axis];
+        }
+
+        function getAxisLabel(axis) {
+            const labels = {
+                'price': 'Cijena (€)',
+                'cpu': 'CPU perf.',
+                'gpu': 'GPU perf.',
+                'ram': 'RAM (GB)',
+                'battery': 'Baterija (h)',
+                'weight': 'Težina (kg)',
+                'screen': 'Ekran (")'
+            };
+            return labels[axis];
+        }
+
+        function getAxisRange(axis) {
+            const ranges = {
+                'price': {min: 600, max: 3000},
+                'cpu': {min: 50, max: 100},
+                'gpu': {min: 25, max: 100},
+                'ram': {min: 8, max: 64},
+                'battery': {min: 4, max: 18},
+                'weight': {min: 1.2, max: 2.5},
+                'screen': {min: 13, max: 16}
+            };
+            return ranges[axis];
+        }
+
+        function applyConstraints(laptop) {
+            const maxPrice = parseFloat(document.getElementById('maxPrice').value);
+            const minRAM = parseFloat(document.getElementById('minRAM').value);
+            const maxWeight = parseFloat(document.getElementById('maxWeight').value);
+            const minBattery = parseFloat(document.getElementById('minBattery').value);
+
+            return laptop.price <= maxPrice &&
+                   laptop.ram >= minRAM &&
+                   laptop.weight <= maxWeight &&
+                   laptop.battery >= minBattery;
+        }
+
+        function calculateScore(laptop, weights) {
+            const priceNorm = 1 - (laptop.price - 600) / (3000 - 600);
+            const cpuNorm = laptop.cpu / 100;
+            const gpuNorm = laptop.gpu / 100;
+            const battNorm = (laptop.battery - 4) / (17 - 4);
+            const weightNorm = 1 - (laptop.weight - 1.2) / (2.5 - 1.2);
+
+            const score = 
+                (weights.price / 100) * priceNorm +
+                (weights.perf / 100) * cpuNorm +
+                (weights.gpu / 100) * gpuNorm +
+                (weights.batt / 100) * battNorm +
+                (weights.weight / 100) * weightNorm;
+
+            return score;
+        }
+
+        function isParetoOptimal(laptop, feasibleLaptops) {
+            for (let other of feasibleLaptops) {
+                if (other === laptop) continue;
+                
+                const otherBetterPrice = other.price <= laptop.price;
+                const otherBetterCPU = other.cpu >= laptop.cpu;
+                const otherBetterGPU = other.gpu >= laptop.gpu;
+                const otherBetterBatt = other.battery >= laptop.battery;
+                const otherBetterWeight = other.weight <= laptop.weight;
+
+                const allBetterOrEqual = otherBetterPrice && otherBetterCPU && 
+                                        otherBetterGPU && otherBetterBatt && 
+                                        otherBetterWeight;
+
+                const atLeastOneBetter = (other.price < laptop.price) ||
+                                        (other.cpu > laptop.cpu) ||
+                                        (other.gpu > laptop.gpu) ||
+                                        (other.battery > laptop.battery) ||
+                                        (other.weight < laptop.weight);
+
+                if (allBetterOrEqual && atLeastOneBetter) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function drawSpace(canvas, ctx, laptops, xAxis, yAxis, title) {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const padding = 60;
+            const width = canvas.width - 2 * padding;
+            const height = canvas.height - 2 * padding;
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, padding + height);
+            ctx.lineTo(padding + width, padding + height);
+            ctx.stroke();
+
+            // Axes labels
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            
+            const xLabel = getAxisLabel(xAxis);
+            const yLabel = getAxisLabel(yAxis);
+            
+            ctx.fillText(xLabel, padding + width / 2, canvas.height - 20);
+            
+            ctx.save();
+            ctx.translate(20, padding + height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText(yLabel, 0, 0);
+            ctx.restore();
+
+            const xRange = getAxisRange(xAxis);
+            const yRange = getAxisRange(yAxis);
+
+            // Draw points
+            laptops.forEach((laptop, index) => {
+                const xVal = getAxisValue(laptop, xAxis);
+                const yVal = getAxisValue(laptop, yAxis);
+
+                const x = padding + ((xVal - xRange.min) / (xRange.max - xRange.min)) * width;
+                const y = padding + height - ((yVal - yRange.min) / (yRange.max - yRange.min)) * height;
+
+                let color;
+                if (!laptop.feasible) {
+                    color = '#ff6b6b'; // Red for infeasible
+                } else if (index === 0) {
+                    color = '#28a745'; // Green for recommended
+                } else if (laptop.paretoOptimal) {
+                    color = '#667eea'; // Blue for Pareto
+                } else {
+                    color = '#cccccc'; // Gray for dominated
+                }
+
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, index === 0 ? 8 : 6, 0, 2 * Math.PI);
+                ctx.fill();
+
+                if (index === 0) {
+                    ctx.strokeStyle = '#1e7e34';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+
+                // Label for recommended
+                if (index === 0 && laptop.feasible) {
+                    ctx.fillStyle = '#333';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.fillText('x*', x + 10, y - 5);
+                }
+            });
+
+            // Draw Pareto front if in value space
+            if (title.includes('vrijednosti')) {
+                const paretoLaptops = laptops.filter(l => l.paretoOptimal && l.feasible)
+                    .sort((a, b) => getAxisValue(a, xAxis) - getAxisValue(b, xAxis));
+
+                if (paretoLaptops.length > 1) {
+                    ctx.strokeStyle = '#667eea';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    
+                    paretoLaptops.forEach((laptop, i) => {
+                        const xVal = getAxisValue(laptop, xAxis);
+                        const yVal = getAxisValue(laptop, yAxis);
+                        const x = padding + ((xVal - xRange.min) / (xRange.max - xRange.min)) * width;
+                        const y = padding + height - ((yVal - yRange.min) / (yRange.max - yRange.min)) * height;
+                        
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    });
+                    
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+        }
+
+        function optimizeLaptop() {
+            const weights = {
+                price: parseFloat(document.getElementById('priceSlider').value),
+                perf: parseFloat(document.getElementById('perfSlider').value),
+                gpu: parseFloat(document.getElementById('gpuSlider').value),
+                batt: parseFloat(document.getElementById('battSlider').value),
+                weight: parseFloat(document.getElementById('weightSlider').value)
+            };
+
+            // Mark feasibility
+            const allLaptops = laptops.map(laptop => ({
+                ...laptop,
+                feasible: applyConstraints(laptop)
+            }));
+
+            const feasibleLaptops = allLaptops.filter(l => l.feasible);
+
+            if (feasibleLaptops.length === 0) {
+                alert('Nema laptopa koji zadovoljava sva ograničenja. Pokušajte ublažiti kriterije.');
+                return;
+            }
+
+            // Calculate scores
+            const scoredLaptops = feasibleLaptops.map(laptop => ({
+                ...laptop,
+                score: calculateScore(laptop, weights),
+                paretoOptimal: false
+            }));
+
+            // Determine Pareto optimal solutions
+            scoredLaptops.forEach(laptop => {
+                laptop.paretoOptimal = isParetoOptimal(laptop, feasibleLaptops);
+            });
+
+            // Sort by score
+            scoredLaptops.sort((a, b) => b.score - a.score);
+
+            // Combine scored with infeasible
+            const displayLaptops = [
+                ...scoredLaptops,
+                ...allLaptops.filter(l => !l.feasible).map(l => ({...l, score: 0, paretoOptimal: false}))
+            ];
+
+            // Get selected axes
+            const problemX = document.getElementById('problemX').value;
+            const problemY = document.getElementById('problemY').value;
+            const valueX = document.getElementById('valueX').value;
+            const valueY = document.getElementById('valueY').value;
+
+            // Draw both spaces
+            drawSpace(problemCanvas, ctxProblem, displayLaptops, problemX, problemY, 'Problemski prostor');
+            drawSpace(valueCanvas, ctxValue, displayLaptops, valueX, valueY, 'Prostor vrijednosti');
+
+            // Display laptop cards
+            displayLaptopCards(scoredLaptops);
+        }
+
+        function displayLaptopCards(laptops) {
+            const container = document.getElementById('laptopCards');
+            container.innerHTML = '';
+
+            laptops.slice(0, 9).forEach((laptop, index) => {
+                const card = document.createElement('div');
+                card.className = 'laptop-card';
+                
+                if (index === 0) {
+                    card.classList.add('recommended');
+                } else if (laptop.paretoOptimal) {
+                    card.classList.add('pareto-optimal');
+                }
+
+                card.innerHTML = `
+                    <div class="laptop-header">
+                        <div class="laptop-name">${laptop.name}</div>
+                        ${index === 0 ? '<span class="laptop-badge badge-recommended">PREPORUČEN</span>' : 
+                          laptop.paretoOptimal ? '<span class="laptop-badge badge-pareto">PARETO</span>' : ''}
+                    </div>
+                    <div class="laptop-specs">
+                        <div class="spec-row">
+                            <span class="spec-label">💰 Cijena</span>
+                            <span class="spec-value">${laptop.price}€</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">⚡ CPU</span>
+                            <span class="spec-value">${laptop.cpu}/100</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">🎮 GPU</span>
+                            <span class="spec-value">${laptop.gpu}/100</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">💾 RAM</span>
+                            <span class="spec-value">${laptop.ram}GB</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">🔋 Baterija</span>
+                            <span class="spec-value">${laptop.battery}h</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">🪶 Težina</span>
+                            <span class="spec-value">${laptop.weight}kg</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">📺 Ekran</span>
+                            <span class="spec-value">${laptop.screen}"</span>
+                        </div>
+                    </div>
+                    <div class="laptop-score">
+                        <div class="score-label">Ukupan skor</div>
+                        <div class="score-value">${(laptop.score * 100).toFixed(1)}</div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // Initial optimization
+        optimizeLaptop();
+    </script>
+</body>
+</html>

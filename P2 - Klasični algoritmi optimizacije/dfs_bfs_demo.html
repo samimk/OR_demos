@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFS vs BFS Visualization Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: flex;
+            min-height: 700px;
+        }
+
+        .sidebar {
+            width: 320px;
+            background: #f8f9fa;
+            padding: 25px;
+            border-right: 2px solid #e0e0e0;
+            overflow-y: auto;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .radio-group, .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .radio-label:hover {
+            background: #f0f0f0;
+        }
+
+        .radio-label input[type="radio"] {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .speed-control {
+            margin-top: 15px;
+        }
+
+        .speed-control label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .speed-control input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .speed-value {
+            text-align: center;
+            margin-top: 5px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .canvas-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .canvas-wrapper {
+            margin-bottom: 20px;
+        }
+
+        .canvas-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        #graphCanvas {
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            cursor: crosshair;
+            background: #fafafa;
+            display: block;
+            margin: 0 auto;
+        }
+
+        #treeCanvas {
+            border: 3px solid #28a745;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            background: #fafafa;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .stats {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+            color: #856404;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+
+        .legend-label {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .comparison-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .comparison-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+        }
+
+        .comparison-card.winner {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+
+        .comparison-card h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .comparison-metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .comparison-metric span:first-child {
+            color: #666;
+        }
+
+        .comparison-metric span:last-child {
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 DFS vs BFS Visualization</h1>
+            <p>Interactive demonstration of Depth-First Search and Breadth-First Search algorithms</p>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="instructions">
+                    <h3>📋 Instructions</h3>
+                    <ul>
+                        <li>Click to add nodes</li>
+                        <li>Click node to select start/target</li>
+                        <li>Drag between nodes to create edges</li>
+                        <li>Right-click to delete node</li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Algorithm Selection</div>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="algorithm" value="dfs" checked>
+                            <span>Depth-First Search (DFS)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="algorithm" value="bfs">
+                            <span>Breadth-First Search (BFS)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="algorithm" value="both">
+                            <span>Compare Both</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Graph Setup</div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Number of Nodes:</label>
+                        <input type="number" id="nodeCount" value="10" min="3" max="20"
+                               style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div class="button-group">
+                        <button class="btn-success" onclick="generateRandomGraph()">Generate Random Graph</button>
+                        <button class="btn-secondary" onclick="clearGraph()">Clear Graph</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Node Selection</div>
+                    <div class="button-group">
+                        <button class="btn-primary" onclick="setSelectionMode('start')">Set Start Node</button>
+                        <button class="btn-primary" onclick="setSelectionMode('target')">Set Target Node</button>
+                    </div>
+                    <div style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 6px;">
+                        <div style="margin-bottom: 5px;"><strong>Start:</strong> <span id="startLabel">Not set</span></div>
+                        <div><strong>Target:</strong> <span id="targetLabel">Not set</span></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Visualization Controls</div>
+                    <div class="speed-control">
+                        <label>Animation Speed</label>
+                        <input type="range" id="speedSlider" min="1" max="10" value="5" oninput="updateSpeed()">
+                        <div class="speed-value" id="speedValue">Medium</div>
+                    </div>
+                    <div class="button-group" style="margin-top: 15px;">
+                        <button class="btn-success" onclick="startSearch()">▶ Start Search</button>
+                        <button class="btn-secondary" onclick="pauseSearch()">⏸ Pause</button>
+                        <button class="btn-danger" onclick="resetSearch()">⏹ Reset</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Legend</div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #3498db;"></div>
+                            <span class="legend-label">Unvisited</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #f39c12;"></div>
+                            <span class="legend-label">Visiting</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #95a5a6;"></div>
+                            <span class="legend-label">Visited</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #2ecc71;"></div>
+                            <span class="legend-label">Path</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #e74c3c;"></div>
+                            <span class="legend-label">Start</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #9b59b6;"></div>
+                            <span class="legend-label">Target</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <div class="canvas-wrapper">
+                    <div class="canvas-title">Graph Visualization</div>
+                    <canvas id="graphCanvas" width="900" height="500"></canvas>
+                </div>
+
+                <div class="canvas-wrapper">
+                    <div class="canvas-title">Search Tree Structure</div>
+                    <canvas id="treeCanvas" width="900" height="400"></canvas>
+                </div>
+
+                <div id="statsContainer" style="width: 100%; margin-top: 20px; display: none;">
+                    <div class="stats">
+                        <div class="section-title">Search Statistics</div>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-label">Nodes Visited</div>
+                                <div class="stat-value" id="nodesVisited">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Path Length</div>
+                                <div class="stat-value" id="pathLength">-</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Steps Taken</div>
+                                <div class="stat-value" id="stepsTaken">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Status</div>
+                                <div class="stat-value" id="searchStatus">Ready</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="comparisonContainer" style="width: 100%; margin-top: 20px; display: none;">
+                    <div class="comparison-section">
+                        <div class="section-title">Algorithm Comparison</div>
+                        <div class="comparison-grid">
+                            <div class="comparison-card" id="dfsCard">
+                                <h4>DFS (Depth-First Search)</h4>
+                                <div class="comparison-metric">
+                                    <span>Nodes Visited:</span>
+                                    <span id="dfsNodesVisited">-</span>
+                                </div>
+                                <div class="comparison-metric">
+                                    <span>Path Length:</span>
+                                    <span id="dfsPathLength">-</span>
+                                </div>
+                                <div class="comparison-metric">
+                                    <span>Steps:</span>
+                                    <span id="dfsSteps">-</span>
+                                </div>
+                                <div class="comparison-metric">
+                                    <span>Found:</span>
+                                    <span id="dfsFound">-</span>
+                                </div>
+                            </div>
+                            <div class="comparison-card" id="bfsCard">
+                                <h4>BFS (Breadth-First Search)</h4>
+                                <div class="comparison-metric">
+                                    <span>Nodes Visited:</span>
+                                    <span id="bfsNodesVisited">-</span>
+                                </div>
+                                <div class="comparison-metric">
+                                    <span>Path Length:</span>
+                                    <span id="bfsPathLength">-</span>
+                                </div>
+                                <div class="comparison-metric">
+                                    <span>Steps:</span>
+                                    <span id="bfsSteps">-</span>
+                                </div>
+                                <div class="comparison-metric">
+                                    <span>Found:</span>
+                                    <span id="bfsFound">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===========================
+        // Graph Data Structure
+        // ===========================
+        class Node {
+            constructor(id, x, y) {
+                this.id = id;
+                this.x = x;
+                this.y = y;
+                this.neighbors = [];
+                this.state = 'unvisited'; // unvisited, visiting, visited, path
+            }
+        }
+
+        class Graph {
+            constructor() {
+                this.nodes = [];
+                this.nodeIdCounter = 0;
+            }
+
+            addNode(x, y) {
+                const node = new Node(this.nodeIdCounter++, x, y);
+                this.nodes.push(node);
+                return node;
+            }
+
+            removeNode(node) {
+                // Remove all edges to this node
+                this.nodes.forEach(n => {
+                    n.neighbors = n.neighbors.filter(neighbor => neighbor !== node);
+                });
+                // Remove the node itself
+                this.nodes = this.nodes.filter(n => n !== node);
+            }
+
+            addEdge(node1, node2) {
+                if (!node1.neighbors.includes(node2)) {
+                    node1.neighbors.push(node2);
+                    node2.neighbors.push(node1);
+                }
+            }
+
+            getNodeAt(x, y, radius = 20) {
+                for (let node of this.nodes) {
+                    const dist = Math.sqrt((node.x - x) ** 2 + (node.y - y) ** 2);
+                    if (dist <= radius) {
+                        return node;
+                    }
+                }
+                return null;
+            }
+
+            reset() {
+                this.nodes.forEach(node => {
+                    node.state = 'unvisited';
+                });
+            }
+
+            clear() {
+                this.nodes = [];
+                this.nodeIdCounter = 0;
+            }
+        }
+
+        // ===========================
+        // Search Algorithms
+        // ===========================
+        class SearchAlgorithm {
+            constructor(graph, startNode, targetNode) {
+                this.graph = graph;
+                this.startNode = startNode;
+                this.targetNode = targetNode;
+                this.visitedNodes = [];
+                this.currentPath = [];
+                this.finalPath = [];
+                this.found = false;
+                this.steps = 0;
+            }
+
+            reset() {
+                this.visitedNodes = [];
+                this.currentPath = [];
+                this.finalPath = [];
+                this.found = false;
+                this.steps = 0;
+            }
+        }
+
+        class DFS extends SearchAlgorithm {
+            constructor(graph, startNode, targetNode) {
+                super(graph, startNode, targetNode);
+                this.stack = [startNode];
+                this.parent = new Map();
+                this.parent.set(startNode, null);
+            }
+
+            step() {
+                if (this.stack.length === 0 || this.found) {
+                    return false;
+                }
+
+                const current = this.stack.pop();
+                this.steps++;
+
+                if (current.state === 'unvisited') {
+                    current.state = 'visiting';
+                    this.visitedNodes.push(current);
+                    this.currentPath.push(current);
+
+                    if (current === this.targetNode) {
+                        this.found = true;
+                        this.reconstructPath();
+                        return false;
+                    }
+
+                    // Add unvisited neighbors to stack (reversed for left-to-right order)
+                    const unvisitedNeighbors = current.neighbors
+                        .filter(n => n.state === 'unvisited')
+                        .reverse();
+
+                    for (let neighbor of unvisitedNeighbors) {
+                        if (!this.parent.has(neighbor)) {
+                            this.parent.set(neighbor, current);
+                            this.stack.push(neighbor);
+                        }
+                    }
+
+                    setTimeout(() => {
+                        if (current !== this.targetNode) {
+                            current.state = 'visited';
+                        }
+                    }, 100);
+                }
+
+                return true;
+            }
+
+            reconstructPath() {
+                let current = this.targetNode;
+                this.finalPath = [];
+
+                while (current !== null) {
+                    this.finalPath.unshift(current);
+                    current = this.parent.get(current);
+                }
+
+                this.finalPath.forEach(node => {
+                    if (node !== this.startNode && node !== this.targetNode) {
+                        node.state = 'path';
+                    }
+                });
+            }
+        }
+
+        class BFS extends SearchAlgorithm {
+            constructor(graph, startNode, targetNode) {
+                super(graph, startNode, targetNode);
+                this.queue = [startNode];
+                this.parent = new Map();
+                this.parent.set(startNode, null);
+                startNode.state = 'visiting';
+            }
+
+            step() {
+                if (this.queue.length === 0 || this.found) {
+                    return false;
+                }
+
+                const current = this.queue.shift();
+                this.steps++;
+                this.visitedNodes.push(current);
+                this.currentPath.push(current);
+
+                if (current === this.targetNode) {
+                    this.found = true;
+                    this.reconstructPath();
+                    return false;
+                }
+
+                // Add unvisited neighbors to queue
+                for (let neighbor of current.neighbors) {
+                    if (neighbor.state === 'unvisited') {
+                        neighbor.state = 'visiting';
+                        this.queue.push(neighbor);
+                        this.parent.set(neighbor, current);
+                    }
+                }
+
+                if (current !== this.startNode) {
+                    current.state = 'visited';
+                }
+
+                return true;
+            }
+
+            reconstructPath() {
+                let current = this.targetNode;
+                this.finalPath = [];
+
+                while (current !== null) {
+                    this.finalPath.unshift(current);
+                    current = this.parent.get(current);
+                }
+
+                this.finalPath.forEach(node => {
+                    if (node !== this.startNode && node !== this.targetNode) {
+                        node.state = 'path';
+                    }
+                });
+            }
+        }
+
+        // ===========================
+        // Visualization
+        // ===========================
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const treeCanvas = document.getElementById('treeCanvas');
+        const treeCtx = treeCanvas.getContext('2d');
+
+        const graph = new Graph();
+        let startNode = null;
+        let targetNode = null;
+        let dragStart = null;
+        let selectionMode = null;
+
+        let searchAlgorithm = null;
+        let searchInterval = null;
+        let animationSpeed = 500;
+        let isPaused = false;
+
+        let dfsResults = null;
+        let bfsResults = null;
+
+        // Tree layout tracking
+        let treeLayout = new Map(); // Maps node to {x, y, level}
+
+        function drawGraph() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw edges
+            ctx.strokeStyle = '#95a5a6';
+            ctx.lineWidth = 2;
+            graph.nodes.forEach(node => {
+                node.neighbors.forEach(neighbor => {
+                    if (node.id < neighbor.id) { // Draw each edge only once
+                        ctx.beginPath();
+                        ctx.moveTo(node.x, node.y);
+                        ctx.lineTo(neighbor.x, neighbor.y);
+                        ctx.stroke();
+                    }
+                });
+            });
+
+            // Draw nodes
+            graph.nodes.forEach(node => {
+                let color = '#3498db'; // Default unvisited
+
+                if (node === startNode) {
+                    color = '#e74c3c'; // Red for start
+                } else if (node === targetNode) {
+                    color = '#9b59b6'; // Purple for target
+                } else if (node.state === 'visiting') {
+                    color = '#f39c12'; // Orange for visiting
+                } else if (node.state === 'visited') {
+                    color = '#95a5a6'; // Gray for visited
+                } else if (node.state === 'path') {
+                    color = '#2ecc71'; // Green for path
+                }
+
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 20, 0, 2 * Math.PI);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = '#2c3e50';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Draw node ID
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(node.id, node.x, node.y);
+            });
+
+            // Draw drag line
+            if (dragStart) {
+                ctx.strokeStyle = '#3498db';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(dragStart.node.x, dragStart.node.y);
+                ctx.lineTo(dragStart.x, dragStart.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        function drawSearchTree() {
+            treeCtx.clearRect(0, 0, treeCanvas.width, treeCanvas.height);
+
+            if (!searchAlgorithm || !searchAlgorithm.parent) {
+                treeCtx.fillStyle = '#999';
+                treeCtx.font = '16px Arial';
+                treeCtx.textAlign = 'center';
+                treeCtx.fillText('Search tree will appear here during algorithm execution', treeCanvas.width / 2, treeCanvas.height / 2);
+                return;
+            }
+
+            // Build tree layout
+            treeLayout.clear();
+            const levelNodes = new Map(); // level -> array of nodes
+
+            // BFS to assign levels
+            const queue = [{node: startNode, level: 0}];
+            treeLayout.set(startNode, {level: 0, index: 0});
+
+            while (queue.length > 0) {
+                const {node, level} = queue.shift();
+
+                if (!levelNodes.has(level)) {
+                    levelNodes.set(level, []);
+                }
+                levelNodes.get(level).push(node);
+
+                // Find children in search tree
+                for (let [child, parent] of searchAlgorithm.parent.entries()) {
+                    if (parent === node && !treeLayout.has(child)) {
+                        treeLayout.set(child, {level: level + 1, index: 0});
+                        queue.push({node: child, level: level + 1});
+                    }
+                }
+            }
+
+            // Calculate positions
+            const levelHeight = 80;
+            const nodeRadius = 18;
+            const padding = 50;
+
+            levelNodes.forEach((nodes, level) => {
+                const y = padding + level * levelHeight;
+                const totalWidth = treeCanvas.width - 2 * padding;
+                const spacing = nodes.length > 1 ? totalWidth / (nodes.length - 1) : 0;
+
+                nodes.forEach((node, index) => {
+                    const x = nodes.length === 1 ? treeCanvas.width / 2 : padding + index * spacing;
+                    const layout = treeLayout.get(node);
+                    layout.x = x;
+                    layout.y = y;
+                    layout.index = index;
+                });
+            });
+
+            // Draw edges
+            treeCtx.strokeStyle = '#95a5a6';
+            treeCtx.lineWidth = 2;
+            searchAlgorithm.parent.forEach((parent, child) => {
+                if (parent && treeLayout.has(child) && treeLayout.has(parent)) {
+                    const childPos = treeLayout.get(child);
+                    const parentPos = treeLayout.get(parent);
+
+                    // Color edge based on whether it's in final path
+                    if (searchAlgorithm.found && searchAlgorithm.finalPath.includes(child) && searchAlgorithm.finalPath.includes(parent)) {
+                        treeCtx.strokeStyle = '#2ecc71';
+                        treeCtx.lineWidth = 3;
+                    } else {
+                        treeCtx.strokeStyle = '#95a5a6';
+                        treeCtx.lineWidth = 2;
+                    }
+
+                    treeCtx.beginPath();
+                    treeCtx.moveTo(parentPos.x, parentPos.y);
+                    treeCtx.lineTo(childPos.x, childPos.y);
+                    treeCtx.stroke();
+                }
+            });
+
+            // Draw nodes
+            treeLayout.forEach((pos, node) => {
+                let color = '#3498db';
+
+                if (node === startNode) {
+                    color = '#e74c3c';
+                } else if (node === targetNode) {
+                    color = '#9b59b6';
+                } else if (searchAlgorithm.found && searchAlgorithm.finalPath.includes(node)) {
+                    color = '#2ecc71';
+                } else if (node.state === 'visited') {
+                    color = '#95a5a6';
+                } else if (node.state === 'visiting') {
+                    color = '#f39c12';
+                }
+
+                treeCtx.beginPath();
+                treeCtx.arc(pos.x, pos.y, nodeRadius, 0, 2 * Math.PI);
+                treeCtx.fillStyle = color;
+                treeCtx.fill();
+                treeCtx.strokeStyle = '#2c3e50';
+                treeCtx.lineWidth = 2;
+                treeCtx.stroke();
+
+                // Draw node ID
+                treeCtx.fillStyle = 'white';
+                treeCtx.font = 'bold 12px Arial';
+                treeCtx.textAlign = 'center';
+                treeCtx.textBaseline = 'middle';
+                treeCtx.fillText(node.id, pos.x, pos.y);
+            });
+
+            // Draw level labels
+            treeCtx.fillStyle = '#666';
+            treeCtx.font = '12px Arial';
+            treeCtx.textAlign = 'left';
+            levelNodes.forEach((nodes, level) => {
+                const y = padding + level * levelHeight;
+                treeCtx.fillText(`Level ${level}`, 5, y + 5);
+            });
+        }
+
+        // ===========================
+        // Event Handlers
+        // ===========================
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const node = graph.getNodeAt(x, y);
+
+            if (e.button === 0) { // Left click
+                if (selectionMode === 'start' && node) {
+                    startNode = node;
+                    document.getElementById('startLabel').textContent = `Node ${node.id}`;
+                    selectionMode = null;
+                    drawGraph();
+                } else if (selectionMode === 'target' && node) {
+                    targetNode = node;
+                    document.getElementById('targetLabel').textContent = `Node ${node.id}`;
+                    selectionMode = null;
+                    drawGraph();
+                } else if (node) {
+                    // Start dragging for edge creation
+                    dragStart = { node: node, x: x, y: y };
+                } else {
+                    // Create new node
+                    graph.addNode(x, y);
+                    drawGraph();
+                }
+            } else if (e.button === 2) { // Right click
+                if (node) {
+                    if (node === startNode) startNode = null;
+                    if (node === targetNode) targetNode = null;
+                    graph.removeNode(node);
+                    document.getElementById('startLabel').textContent = startNode ? `Node ${startNode.id}` : 'Not set';
+                    document.getElementById('targetLabel').textContent = targetNode ? `Node ${targetNode.id}` : 'Not set';
+                    drawGraph();
+                }
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (dragStart) {
+                const rect = canvas.getBoundingClientRect();
+                dragStart.x = e.clientX - rect.left;
+                dragStart.y = e.clientY - rect.top;
+                drawGraph();
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (dragStart) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const targetNode = graph.getNodeAt(x, y);
+
+                if (targetNode && targetNode !== dragStart.node) {
+                    graph.addEdge(dragStart.node, targetNode);
+                }
+
+                dragStart = null;
+                drawGraph();
+            }
+        });
+
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // ===========================
+        // Control Functions
+        // ===========================
+        function setSelectionMode(mode) {
+            selectionMode = mode;
+            canvas.style.cursor = 'pointer';
+        }
+
+        function generateRandomGraph() {
+            clearGraph();
+
+            // Get the number of nodes from the input
+            const numNodesInput = document.getElementById('nodeCount');
+            let numNodes = parseInt(numNodesInput.value);
+
+            // Validate input
+            if (isNaN(numNodes) || numNodes < 3) {
+                numNodes = 3;
+                numNodesInput.value = 3;
+            } else if (numNodes > 20) {
+                numNodes = 20;
+                numNodesInput.value = 20;
+            }
+
+            const padding = 100;
+
+            // Create nodes in a circular pattern with some randomness
+            for (let i = 0; i < numNodes; i++) {
+                const angle = (i / numNodes) * 2 * Math.PI;
+                const radius = 200 + Math.random() * 100;
+                const x = canvas.width / 2 + radius * Math.cos(angle) + (Math.random() - 0.5) * 50;
+                const y = canvas.height / 2 + radius * Math.sin(angle) + (Math.random() - 0.5) * 50;
+                graph.addNode(
+                    Math.max(padding, Math.min(canvas.width - padding, x)),
+                    Math.max(padding, Math.min(canvas.height - padding, y))
+                );
+            }
+
+            // Create random edges (ensure graph is connected)
+            // First, create a spanning path to ensure connectivity
+            for (let i = 0; i < graph.nodes.length - 1; i++) {
+                graph.addEdge(graph.nodes[i], graph.nodes[i + 1]);
+            }
+
+            // Then add random additional edges
+            graph.nodes.forEach((node, i) => {
+                const numExtraEdges = 1 + Math.floor(Math.random() * 2);
+                for (let j = 0; j < numExtraEdges; j++) {
+                    const targetIdx = Math.floor(Math.random() * graph.nodes.length);
+                    if (targetIdx !== i && Math.abs(targetIdx - i) > 1) {
+                        graph.addEdge(node, graph.nodes[targetIdx]);
+                    }
+                }
+            });
+
+            // Set random start and target (ensure they're far apart)
+            if (graph.nodes.length > 1) {
+                startNode = graph.nodes[0];
+                targetNode = graph.nodes[Math.floor(graph.nodes.length / 2) + Math.floor(graph.nodes.length / 4)];
+                document.getElementById('startLabel').textContent = `Node ${startNode.id}`;
+                document.getElementById('targetLabel').textContent = `Node ${targetNode.id}`;
+            }
+
+            drawGraph();
+        }
+
+        function clearGraph() {
+            graph.clear();
+            startNode = null;
+            targetNode = null;
+            document.getElementById('startLabel').textContent = 'Not set';
+            document.getElementById('targetLabel').textContent = 'Not set';
+            resetSearch();
+            drawGraph();
+        }
+
+        function updateSpeed() {
+            const speed = document.getElementById('speedSlider').value;
+            const labels = ['Very Slow', 'Slow', 'Slow', 'Medium', 'Medium', 'Medium', 'Fast', 'Fast', 'Very Fast', 'Very Fast'];
+            document.getElementById('speedValue').textContent = labels[speed - 1];
+            animationSpeed = 1000 / speed;
+        }
+
+        function startSearch() {
+            if (!startNode || !targetNode) {
+                alert('Please set both start and target nodes!');
+                return;
+            }
+
+            if (startNode === targetNode) {
+                alert('Start and target nodes must be different!');
+                return;
+            }
+
+            resetSearch();
+            graph.reset();
+
+            const algorithm = document.querySelector('input[name="algorithm"]:checked').value;
+
+            if (algorithm === 'both') {
+                // Run both algorithms
+                runBothAlgorithms();
+            } else {
+                // Run single algorithm
+                document.getElementById('statsContainer').style.display = 'block';
+                document.getElementById('comparisonContainer').style.display = 'none';
+
+                if (algorithm === 'dfs') {
+                    searchAlgorithm = new DFS(graph, startNode, targetNode);
+                } else {
+                    searchAlgorithm = new BFS(graph, startNode, targetNode);
+                }
+
+                isPaused = false;
+                runSearchAnimation();
+            }
+        }
+
+        function runSearchAnimation() {
+            if (isPaused) return;
+
+            const hasNext = searchAlgorithm.step();
+            updateStats();
+            drawGraph();
+            drawSearchTree();
+
+            if (hasNext && !isPaused) {
+                searchInterval = setTimeout(runSearchAnimation, animationSpeed);
+            } else if (!hasNext) {
+                document.getElementById('searchStatus').textContent =
+                    searchAlgorithm.found ? '✓ Found!' : '✗ Not Found';
+            }
+        }
+
+        function runBothAlgorithms() {
+            document.getElementById('statsContainer').style.display = 'none';
+            document.getElementById('comparisonContainer').style.display = 'block';
+
+            // Create copies of the graph state
+            const graphStateDFS = graph.nodes.map(n => ({...n, state: 'unvisited'}));
+            const graphStateBFS = graph.nodes.map(n => ({...n, state: 'unvisited'}));
+
+            // Run DFS
+            const dfs = new DFS(graph, startNode, targetNode);
+            while (dfs.step()) {}
+            dfsResults = {
+                nodesVisited: dfs.visitedNodes.length,
+                pathLength: dfs.found ? dfs.finalPath.length : -1,
+                steps: dfs.steps,
+                found: dfs.found
+            };
+
+            // Reset graph
+            graph.reset();
+
+            // Run BFS
+            const bfs = new BFS(graph, startNode, targetNode);
+            while (bfs.step()) {}
+            bfsResults = {
+                nodesVisited: bfs.visitedNodes.length,
+                pathLength: bfs.found ? bfs.finalPath.length : -1,
+                steps: bfs.steps,
+                found: bfs.found
+            };
+
+            // Update comparison display
+            updateComparison();
+
+            // Show BFS result on canvas
+            drawGraph();
+        }
+
+        function updateComparison() {
+            document.getElementById('dfsNodesVisited').textContent = dfsResults.nodesVisited;
+            document.getElementById('dfsPathLength').textContent = dfsResults.pathLength !== -1 ? dfsResults.pathLength : 'N/A';
+            document.getElementById('dfsSteps').textContent = dfsResults.steps;
+            document.getElementById('dfsFound').textContent = dfsResults.found ? '✓ Yes' : '✗ No';
+
+            document.getElementById('bfsNodesVisited').textContent = bfsResults.nodesVisited;
+            document.getElementById('bfsPathLength').textContent = bfsResults.pathLength !== -1 ? bfsResults.pathLength : 'N/A';
+            document.getElementById('bfsSteps').textContent = bfsResults.steps;
+            document.getElementById('bfsFound').textContent = bfsResults.found ? '✓ Yes' : '✗ No';
+
+            // Determine winner (shorter path is better)
+            const dfsCard = document.getElementById('dfsCard');
+            const bfsCard = document.getElementById('bfsCard');
+            dfsCard.classList.remove('winner');
+            bfsCard.classList.remove('winner');
+
+            if (dfsResults.found && bfsResults.found) {
+                if (dfsResults.pathLength < bfsResults.pathLength) {
+                    dfsCard.classList.add('winner');
+                } else if (bfsResults.pathLength < dfsResults.pathLength) {
+                    bfsCard.classList.add('winner');
+                } else {
+                    // Tie - check visited nodes
+                    if (dfsResults.nodesVisited < bfsResults.nodesVisited) {
+                        dfsCard.classList.add('winner');
+                    } else if (bfsResults.nodesVisited < dfsResults.nodesVisited) {
+                        bfsCard.classList.add('winner');
+                    }
+                }
+            } else if (dfsResults.found) {
+                dfsCard.classList.add('winner');
+            } else if (bfsResults.found) {
+                bfsCard.classList.add('winner');
+            }
+        }
+
+        function updateStats() {
+            if (!searchAlgorithm) return;
+
+            document.getElementById('nodesVisited').textContent = searchAlgorithm.visitedNodes.length;
+            document.getElementById('pathLength').textContent =
+                searchAlgorithm.found ? searchAlgorithm.finalPath.length : '-';
+            document.getElementById('stepsTaken').textContent = searchAlgorithm.steps;
+            document.getElementById('searchStatus').textContent =
+                searchAlgorithm.found ? '✓ Found!' : 'Searching...';
+        }
+
+        function pauseSearch() {
+            isPaused = true;
+            if (searchInterval) {
+                clearTimeout(searchInterval);
+            }
+        }
+
+        function resetSearch() {
+            isPaused = false;
+            if (searchInterval) {
+                clearTimeout(searchInterval);
+                searchInterval = null;
+            }
+            searchAlgorithm = null;
+            graph.reset();
+            treeLayout.clear();
+            document.getElementById('nodesVisited').textContent = '0';
+            document.getElementById('pathLength').textContent = '-';
+            document.getElementById('stepsTaken').textContent = '0';
+            document.getElementById('searchStatus').textContent = 'Ready';
+            document.getElementById('statsContainer').style.display = 'none';
+            document.getElementById('comparisonContainer').style.display = 'none';
+            drawGraph();
+            drawSearchTree();
+        }
+
+        // Initialize
+        drawGraph();
+        drawSearchTree();
+        updateSpeed();
+    </script>
+</body>
+</html>

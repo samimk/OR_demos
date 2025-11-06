@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradient Search Optimization Demo</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        /* Menu Bar */
+        .menu-bar {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .menu-item {
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 3px;
+            transition: background-color 0.3s;
+        }
+
+        .menu-item:hover {
+            background-color: #34495e;
+        }
+
+        /* Main Container */
+        .container {
+            display: flex;
+            height: calc(100vh - 45px);
+            padding: 10px;
+            gap: 10px;
+        }
+
+        /* Left Panel */
+        .left-panel {
+            width: 350px;
+            background-color: white;
+            border-radius: 5px;
+            padding: 15px;
+            overflow-y: auto;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+
+        .radio-group, .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .radio-group label, .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .param-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .param-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .param-row label {
+            font-size: 13px;
+            flex: 1;
+        }
+
+        .param-row input {
+            width: 100px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        button:active {
+            background-color: #21618c;
+        }
+
+        .stats-display {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            flex: 1;
+            background-color: white;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #plot {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Modal Dialogs */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .modal-body {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .close-btn {
+            width: auto;
+            padding: 8px 20px;
+            margin-top: 0;
+        }
+
+        .separator {
+            border-top: 1px solid #ddd;
+            margin: 15px 0;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            font-style: italic;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Menu Bar -->
+    <div class="menu-bar">
+        <div class="menu-item" onclick="showHowToUse()">Help - How to Use</div>
+        <div class="menu-item" onclick="showAbout()">Help - About</div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Left Panel: Controls -->
+        <div class="left-panel">
+            <!-- Test Function Selection -->
+            <div class="section">
+                <div class="section-title">Test Function</div>
+                <div class="radio-group" id="functionSelector">
+                    <!-- Generated dynamically -->
+                </div>
+            </div>
+
+            <!-- Visualization Type -->
+            <div class="section">
+                <div class="section-title">Visualization Type</div>
+                <div class="radio-group">
+                    <label><input type="radio" name="vizType" value="2d" checked onchange="onVizTypeChanged()"> 2D Contour Plot</label>
+                    <label><input type="radio" name="vizType" value="3d" onchange="onVizTypeChanged()"> 3D Surface Plot</label>
+                </div>
+            </div>
+
+            <!-- Constraints -->
+            <div class="section">
+                <div class="section-title">Constraints</div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="circleConstraint" onchange="updatePlot()"> Circle Constraint (feasible inside)</label>
+                    <label><input type="checkbox" id="lineConstraint" onchange="updatePlot()"> Line Constraint (y + 1.2x ≤ -5)</label>
+                </div>
+                <div class="separator"></div>
+                <div class="section-title">Penalty Method</div>
+                <div class="radio-group">
+                    <label><input type="radio" name="penaltyMethod" value="exterior" checked> Exterior Penalty</label>
+                    <label><input type="radio" name="penaltyMethod" value="interior"> Interior Penalty</label>
+                </div>
+            </div>
+
+            <!-- Algorithm Parameters -->
+            <div class="section">
+                <div class="section-title">Algorithm Parameters</div>
+                <div class="param-group">
+                    <div class="param-row">
+                        <label>Step Size:</label>
+                        <input type="number" id="stepSize" value="0.001" step="0.001" min="0.0001" max="1">
+                    </div>
+                    <div class="param-row">
+                        <label>Max Iterations:</label>
+                        <input type="number" id="maxIterations" value="10000" step="100" min="10" max="50000">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Initialization -->
+            <div class="section">
+                <div class="section-title">Initialization</div>
+                <div class="info-label">Click on plot to set initial point</div>
+                <button onclick="setRandomInitialPoint()">Random Initial Point</button>
+                <div id="initialPointLabel" class="info-label" style="margin-top: 10px;">Initial Point: Not set</div>
+            </div>
+
+            <!-- Controls -->
+            <div class="section">
+                <div class="section-title">Controls</div>
+                <button onclick="stepOptimization()">Step</button>
+                <button onclick="runComplete()">Run Complete</button>
+                <button onclick="resetOptimization()">Reset</button>
+            </div>
+
+            <!-- Statistics -->
+            <div class="section">
+                <div class="section-title">Statistics</div>
+                <div id="statistics" class="stats-display">No optimization running.</div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Visualization -->
+        <div class="right-panel">
+            <div id="plot"></div>
+        </div>
+    </div>
+
+    <!-- How to Use Modal -->
+    <div id="howToUseModal" class="modal" onclick="closeModal('howToUseModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">How to Use - Gradient Search Optimization Demo</div>
+            <div class="modal-body">
+                <h3>1. SELECT TEST FUNCTION</h3>
+                <p>Choose from 6 different optimization functions with varying characteristics.</p>
+
+                <h3>2. CHOOSE VISUALIZATION TYPE</h3>
+                <p>• 2D Contour Plot: Top-down view with contour lines<br>
+                   • 3D Surface Plot: Interactive 3D surface view</p>
+
+                <h3>3. CONFIGURE CONSTRAINTS (Optional)</h3>
+                <p>• Circle Constraint: Feasible region inside the circle<br>
+                   • Line Constraint: Feasible region on one side of the line<br>
+                   • Penalty Methods: Exterior (any start point) or Interior (feasible start only)</p>
+
+                <h3>4. SET ALGORITHM PARAMETERS</h3>
+                <p>• Step Size: 0.01 - 0.1 typical<br>
+                   • Max Iterations: 50-200 typical</p>
+
+                <h3>5. INITIALIZE STARTING POINT</h3>
+                <p>Click on the plot or use "Random Initial Point" button.</p>
+
+                <h3>6. RUN OPTIMIZATION</h3>
+                <p>• Step: Execute one iteration at a time<br>
+                   • Run Complete: Execute all iterations at once</p>
+
+                <h3>7. OBSERVE RESULTS</h3>
+                <p>• Green star: Global minimum<br>
+                   • Blue circle: Initial point<br>
+                   • Red circle: Current point<br>
+                   • Magenta circle: Best solution<br>
+                   • Red line: Trajectory</p>
+
+                <h3>8. 3D CONTROLS</h3>
+                <p>In 3D mode: Click and drag to rotate, scroll to zoom.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="close-btn" onclick="closeModal('howToUseModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="modal" onclick="closeModal('aboutModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">About</div>
+            <div class="modal-body" style="text-align: center; padding: 20px;">
+                <h2>Gradient Search Optimization Demo</h2>
+                <p style="margin-top: 20px; font-size: 16px;">
+                    <strong>Optimizacija resursa</strong>
+                </p>
+                <p style="margin-top: 15px; font-size: 16px;">
+                    Red. prof. dr Samim Konjicija
+                </p>
+                <p style="margin-top: 15px; font-size: 16px;">
+                    2025. godina
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="close-btn" onclick="closeModal('aboutModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===========================
+        // Test Functions
+        // ===========================
+        class TestFunction {
+            constructor(name, bounds) {
+                this.name = name;
+                this.bounds = bounds; // [[xmin, xmax], [ymin, ymax]]
+            }
+
+            evaluate(x, y) {
+                throw new Error("Method 'evaluate' must be implemented");
+            }
+
+            gradient(x, y) {
+                // Numerical gradient
+                const h = 1e-6;
+                const gradX = (this.evaluate(x + h, y) - this.evaluate(x - h, y)) / (2 * h);
+                const gradY = (this.evaluate(x, y + h) - this.evaluate(x, y - h)) / (2 * h);
+                return [gradX, gradY];
+            }
+
+            globalMinimum() {
+                throw new Error("Method 'globalMinimum' must be implemented");
+            }
+        }
+
+        class SphereFunction extends TestFunction {
+            constructor() {
+                super("Sphere (Unimodal)", [[-5, 5], [-5, 5]]);
+            }
+
+            evaluate(x, y) {
+                return x * x + y * y;
+            }
+
+            gradient(x, y) {
+                return [2 * x, 2 * y];
+            }
+
+            globalMinimum() {
+                return [0, 0, 0];
+            }
+        }
+
+        class PolynomialFunction extends TestFunction {
+            constructor() {
+                super("3rd Order Polynomial (Multimodal)", [[-2.5, 2.5], [-2.5, 2.5]]);
+            }
+
+            evaluate(x, y) {
+                return Math.pow(x, 3) - 3 * x + Math.pow(y, 3) - 3 * y;
+            }
+
+            gradient(x, y) {
+                return [3 * x * x - 3, 3 * y * y - 3];
+            }
+
+            globalMinimum() {
+                return [1, 1, -4];
+            }
+        }
+
+        class RastriginFunction extends TestFunction {
+            constructor() {
+                super("Rastrigin (Highly Multimodal)", [[-5, 5], [-5, 5]]);
+            }
+
+            evaluate(x, y) {
+                return 20 + (x * x - 10 * Math.cos(2 * Math.PI * x)) +
+                       (y * y - 10 * Math.cos(2 * Math.PI * y));
+            }
+
+            gradient(x, y) {
+                const gradX = 2 * x + 20 * Math.PI * Math.sin(2 * Math.PI * x);
+                const gradY = 2 * y + 20 * Math.PI * Math.sin(2 * Math.PI * y);
+                return [gradX, gradY];
+            }
+
+            globalMinimum() {
+                return [0, 0, 0];
+            }
+        }
+
+        class RosenbrockFunction extends TestFunction {
+            constructor() {
+                super("Rosenbrock (Valley-shaped)", [[-2, 2], [-1, 3]]);
+            }
+
+            evaluate(x, y) {
+                return Math.pow(1 - x, 2) + 100 * Math.pow(y - x * x, 2);
+            }
+
+            gradient(x, y) {
+                const gradX = -2 * (1 - x) - 400 * x * (y - x * x);
+                const gradY = 200 * (y - x * x);
+                return [gradX, gradY];
+            }
+
+            globalMinimum() {
+                return [1, 1, 0];
+            }
+        }
+
+        class AckleyFunction extends TestFunction {
+            constructor() {
+                super("Ackley (Multimodal)", [[-5, 5], [-5, 5]]);
+            }
+
+            evaluate(x, y) {
+                const a = 20;
+                const b = 0.2;
+                const c = 2 * Math.PI;
+                const term1 = -a * Math.exp(-b * Math.sqrt(0.5 * (x * x + y * y)));
+                const term2 = -Math.exp(0.5 * (Math.cos(c * x) + Math.cos(c * y)));
+                return term1 + term2 + a + Math.E;
+            }
+
+            globalMinimum() {
+                return [0, 0, 0];
+            }
+        }
+
+        class BealeFunction extends TestFunction {
+            constructor() {
+                super("Beale (Multimodal)", [[-4.5, 4.5], [-4.5, 4.5]]);
+            }
+
+            evaluate(x, y) {
+                const term1 = Math.pow(1.5 - x + x * y, 2);
+                const term2 = Math.pow(2.25 - x + x * y * y, 2);
+                const term3 = Math.pow(2.625 - x + x * Math.pow(y, 3), 2);
+                return term1 + term2 + term3;
+            }
+
+            globalMinimum() {
+                return [3, 0.5, 0];
+            }
+        }
+
+        // ===========================
+        // Constraints
+        // ===========================
+        class CircleConstraint {
+            constructor(centerX, centerY, radius) {
+                this.centerX = centerX;
+                this.centerY = centerY;
+                this.radius = radius;
+            }
+
+            isFeasible(x, y) {
+                const distSq = Math.pow(x - this.centerX, 2) + Math.pow(y - this.centerY, 2);
+                return distSq <= this.radius * this.radius;
+            }
+
+            constraintValue(x, y) {
+                const distSq = Math.pow(x - this.centerX, 2) + Math.pow(y - this.centerY, 2);
+                return this.radius * this.radius - distSq;
+            }
+
+            gradientPenaltyExterior(x, y) {
+                const g = this.constraintValue(x, y);
+                if (g >= 0) return [0, 0];
+
+                const gradGX = -2 * (x - this.centerX);
+                const gradGY = -2 * (y - this.centerY);
+                return [2 * g * gradGX, 2 * g * gradGY];
+            }
+
+            gradientPenaltyInterior(x, y) {
+                const g = this.constraintValue(x, y);
+                if (g <= 0) {
+                    const ext = this.gradientPenaltyExterior(x, y);
+                    return [ext[0] * 100, ext[1] * 100];
+                }
+
+                const gradGX = -2 * (x - this.centerX);
+                const gradGY = -2 * (y - this.centerY);
+                return [gradGX / (g * g), gradGY / (g * g)];
+            }
+        }
+
+        class LineConstraint {
+            constructor(a, b, c) {
+                this.a = a;
+                this.b = b;
+                this.c = c;
+            }
+
+            isFeasible(x, y) {
+                return this.a * x + this.b * y + this.c >= 0;
+            }
+
+            constraintValue(x, y) {
+                return this.a * x + this.b * y + this.c;
+            }
+
+            gradientPenaltyExterior(x, y) {
+                const g = this.constraintValue(x, y);
+                if (g >= 0) return [0, 0];
+                return [2 * g * this.a, 2 * g * this.b];
+            }
+
+            gradientPenaltyInterior(x, y) {
+                const g = this.constraintValue(x, y);
+                if (g <= 0) {
+                    const ext = this.gradientPenaltyExterior(x, y);
+                    return [ext[0] * 100, ext[1] * 100];
+                }
+                return [this.a / (g * g), this.b / (g * g)];
+            }
+        }
+
+        // ===========================
+        // Gradient Search Optimizer
+        // ===========================
+        class GradientSearchOptimizer {
+            constructor(func, stepSize, maxIterations, circleConstraint, lineConstraint,
+                       useCircle, useLine, penaltyMethod) {
+                this.func = func;
+                this.stepSize = stepSize;
+                this.maxIterations = maxIterations;
+                this.circleConstraint = circleConstraint;
+                this.lineConstraint = lineConstraint;
+                this.useCircle = useCircle;
+                this.useLine = useLine;
+                this.penaltyMethod = penaltyMethod;
+                this.penaltyWeight = penaltyMethod === 'exterior' ? 1000 : 1;
+
+                this.currentPoint = null;
+                this.trajectory = [];
+                this.values = [];
+                this.iteration = 0;
+                this.isComplete = false;
+            }
+
+            initialize(startPoint) {
+                this.currentPoint = [...startPoint];
+                this.trajectory = [[...startPoint]];
+                this.values = [this.func.evaluate(...startPoint)];
+                this.iteration = 0;
+                this.isComplete = false;
+            }
+
+            isFeasible(x, y) {
+                let feasible = true;
+                if (this.useCircle && this.circleConstraint) {
+                    feasible = feasible && this.circleConstraint.isFeasible(x, y);
+                }
+                if (this.useLine && this.lineConstraint) {
+                    feasible = feasible && this.lineConstraint.isFeasible(x, y);
+                }
+                return feasible;
+            }
+
+            step() {
+                if (this.isComplete || this.iteration >= this.maxIterations) {
+                    this.isComplete = true;
+                    return false;
+                }
+
+                // Compute gradient
+                const grad = this.func.gradient(...this.currentPoint);
+
+                // Add penalty gradients
+                let penaltyGrad = [0, 0];
+                if (this.useCircle && this.circleConstraint) {
+                    const penalty = this.penaltyMethod === 'exterior' ?
+                        this.circleConstraint.gradientPenaltyExterior(...this.currentPoint) :
+                        this.circleConstraint.gradientPenaltyInterior(...this.currentPoint);
+                    penaltyGrad[0] += this.penaltyWeight * penalty[0];
+                    penaltyGrad[1] += this.penaltyWeight * penalty[1];
+                }
+                if (this.useLine && this.lineConstraint) {
+                    const penalty = this.penaltyMethod === 'exterior' ?
+                        this.lineConstraint.gradientPenaltyExterior(...this.currentPoint) :
+                        this.lineConstraint.gradientPenaltyInterior(...this.currentPoint);
+                    penaltyGrad[0] += this.penaltyWeight * penalty[0];
+                    penaltyGrad[1] += this.penaltyWeight * penalty[1];
+                }
+
+                const totalGrad = [grad[0] + penaltyGrad[0], grad[1] + penaltyGrad[1]];
+
+                // Update position
+                const newPoint = [
+                    this.currentPoint[0] - this.stepSize * totalGrad[0],
+                    this.currentPoint[1] - this.stepSize * totalGrad[1]
+                ];
+
+                // Clamp to bounds
+                const bounds = this.func.bounds;
+                newPoint[0] = Math.max(bounds[0][0], Math.min(bounds[0][1], newPoint[0]));
+                newPoint[1] = Math.max(bounds[1][0], Math.min(bounds[1][1], newPoint[1]));
+
+                // Update state
+                this.currentPoint = newPoint;
+                this.trajectory.push([...newPoint]);
+                this.values.push(this.func.evaluate(...newPoint));
+                this.iteration++;
+
+                // Check convergence
+                const gradMag = Math.sqrt(totalGrad[0] * totalGrad[0] + totalGrad[1] * totalGrad[1]);
+                if (gradMag < 1e-6) {
+                    this.isComplete = true;
+                    return false;
+                }
+
+                return true;
+            }
+
+            runComplete() {
+                while (this.step()) {}
+            }
+
+            getBestSolution() {
+                if (this.values.length === 0) return null;
+                let bestIdx = 0;
+                let bestVal = this.values[0];
+                for (let i = 1; i < this.values.length; i++) {
+                    if (this.values[i] < bestVal) {
+                        bestVal = this.values[i];
+                        bestIdx = i;
+                    }
+                }
+                return [this.trajectory[bestIdx], bestVal];
+            }
+        }
+
+        // ===========================
+        // Global State
+        // ===========================
+        const functions = [
+            new SphereFunction(),
+            new PolynomialFunction(),
+            new RastriginFunction(),
+            new RosenbrockFunction(),
+            new AckleyFunction(),
+            new BealeFunction()
+        ];
+
+        let currentFunction = functions[0];
+        const circleConstraint = new CircleConstraint(-3, -2.5, 2.5);
+        const lineConstraint = new LineConstraint(-1.2, -1, -5);
+        let optimizer = null;
+        let initialPoint = null;
+
+        // ===========================
+        // Initialization
+        // ===========================
+        function initialize() {
+            // Populate function selector
+            const selector = document.getElementById('functionSelector');
+            functions.forEach((func, index) => {
+                const label = document.createElement('label');
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'testFunction';
+                radio.value = index;
+                radio.checked = index === 0;
+                radio.onchange = onFunctionChanged;
+                label.appendChild(radio);
+                label.appendChild(document.createTextNode(' ' + func.name));
+                selector.appendChild(label);
+            });
+
+            updatePlot();
+        }
+
+        // ===========================
+        // Event Handlers
+        // ===========================
+        function onFunctionChanged() {
+            const selected = document.querySelector('input[name="testFunction"]:checked').value;
+            currentFunction = functions[parseInt(selected)];
+            resetOptimization();
+            updatePlot();
+        }
+
+        function onVizTypeChanged() {
+            updatePlot();
+        }
+
+        function setRandomInitialPoint() {
+            const bounds = currentFunction.bounds;
+            const x = bounds[0][0] + Math.random() * (bounds[0][1] - bounds[0][0]);
+            const y = bounds[1][0] + Math.random() * (bounds[1][1] - bounds[1][0]);
+            initialPoint = [x, y];
+            document.getElementById('initialPointLabel').textContent =
+                `Initial Point: (${x.toFixed(3)}, ${y.toFixed(3)})`;
+            updatePlot();
+        }
+
+        function stepOptimization() {
+            if (!initialPoint) {
+                alert('Please set an initial point first.');
+                return;
+            }
+
+            if (!optimizer) {
+                const stepSize = parseFloat(document.getElementById('stepSize').value);
+                const maxIter = parseInt(document.getElementById('maxIterations').value);
+                const useCircle = document.getElementById('circleConstraint').checked;
+                const useLine = document.getElementById('lineConstraint').checked;
+                const penaltyMethod = document.querySelector('input[name="penaltyMethod"]:checked').value;
+
+                optimizer = new GradientSearchOptimizer(
+                    currentFunction, stepSize, maxIter,
+                    circleConstraint, lineConstraint,
+                    useCircle, useLine, penaltyMethod
+                );
+                optimizer.initialize(initialPoint);
+            }
+
+            if (!optimizer.isComplete) {
+                optimizer.step();
+                updatePlot();
+                updateStatistics();
+            } else {
+                alert('Optimization is complete.');
+            }
+        }
+
+        function runComplete() {
+            if (!initialPoint) {
+                alert('Please set an initial point first.');
+                return;
+            }
+
+            if (!optimizer) {
+                const stepSize = parseFloat(document.getElementById('stepSize').value);
+                const maxIter = parseInt(document.getElementById('maxIterations').value);
+                const useCircle = document.getElementById('circleConstraint').checked;
+                const useLine = document.getElementById('lineConstraint').checked;
+                const penaltyMethod = document.querySelector('input[name="penaltyMethod"]:checked').value;
+
+                optimizer = new GradientSearchOptimizer(
+                    currentFunction, stepSize, maxIter,
+                    circleConstraint, lineConstraint,
+                    useCircle, useLine, penaltyMethod
+                );
+                optimizer.initialize(initialPoint);
+            }
+
+            optimizer.runComplete();
+            updatePlot();
+            updateStatistics();
+        }
+
+        function resetOptimization() {
+            optimizer = null;
+            initialPoint = null;
+            document.getElementById('initialPointLabel').textContent = 'Initial Point: Not set';
+            updatePlot();
+            updateStatistics();
+        }
+
+        function updateStatistics() {
+            const statsDiv = document.getElementById('statistics');
+
+            if (!optimizer || optimizer.trajectory.length === 0) {
+                statsDiv.textContent = 'No optimization running.';
+                return;
+            }
+
+            let stats = `Iteration: ${optimizer.iteration}/${optimizer.maxIterations}\n`;
+            stats += `Status: ${optimizer.isComplete ? 'Complete' : 'Running'}\n`;
+            stats += `Penalty Method: ${optimizer.penaltyMethod.charAt(0).toUpperCase() + optimizer.penaltyMethod.slice(1)}\n\n`;
+
+            const curr = optimizer.currentPoint;
+            const currVal = optimizer.values[optimizer.values.length - 1];
+            stats += `Current Point:\n`;
+            stats += `  x = ${curr[0].toFixed(6)}\n`;
+            stats += `  y = ${curr[1].toFixed(6)}\n`;
+            stats += `  f(x,y) = ${currVal.toFixed(6)}\n\n`;
+
+            const best = optimizer.getBestSolution();
+            if (best) {
+                stats += `Best Solution Found:\n`;
+                stats += `  x = ${best[0][0].toFixed(6)}\n`;
+                stats += `  y = ${best[0][1].toFixed(6)}\n`;
+                stats += `  f(x,y) = ${best[1].toFixed(6)}\n\n`;
+            }
+
+            const globalMin = currentFunction.globalMinimum();
+            stats += `Global Minimum:\n`;
+            stats += `  x = ${globalMin[0].toFixed(6)}\n`;
+            stats += `  y = ${globalMin[1].toFixed(6)}\n`;
+            stats += `  f(x,y) = ${globalMin[2].toFixed(6)}\n\n`;
+
+            const isFeasible = optimizer.isFeasible(...curr);
+            stats += `Current Feasibility: ${isFeasible ? 'Feasible' : 'Infeasible'}`;
+
+            statsDiv.textContent = stats;
+        }
+
+        // ===========================
+        // Visualization
+        // ===========================
+        function updatePlot() {
+            const vizType = document.querySelector('input[name="vizType"]:checked').value;
+
+            if (vizType === '2d') {
+                updatePlot2D();
+            } else {
+                updatePlot3D();
+            }
+        }
+
+        function updatePlot2D() {
+            const bounds = currentFunction.bounds;
+            const resolution = 100;
+
+            // Create meshgrid
+            const xRange = [];
+            const yRange = [];
+            for (let i = 0; i < resolution; i++) {
+                xRange.push(bounds[0][0] + i * (bounds[0][1] - bounds[0][0]) / (resolution - 1));
+                yRange.push(bounds[1][0] + i * (bounds[1][1] - bounds[1][0]) / (resolution - 1));
+            }
+
+            const Z = [];
+            for (let j = 0; j < resolution; j++) {
+                const row = [];
+                for (let i = 0; i < resolution; i++) {
+                    row.push(currentFunction.evaluate(xRange[i], yRange[j]));
+                }
+                Z.push(row);
+            }
+
+            const traces = [];
+
+            // Contour plot
+            traces.push({
+                x: xRange,
+                y: yRange,
+                z: Z,
+                type: 'contour',
+                colorscale: 'Cividis',
+                contours: {
+                    coloring: 'heatmap'
+                },
+                showscale: false,
+                opacity: 0.7
+            });
+
+            // Feasible region shading
+            const useCircle = document.getElementById('circleConstraint').checked;
+            const useLine = document.getElementById('lineConstraint').checked;
+
+            if (useCircle || useLine) {
+                // Create mask for feasible regions
+                const feasibleMask = [];
+                for (let j = 0; j < resolution; j++) {
+                    const row = [];
+                    for (let i = 0; i < resolution; i++) {
+                        let isFeasible = true;
+                        if (useCircle) {
+                            isFeasible = isFeasible && circleConstraint.isFeasible(xRange[i], yRange[j]);
+                        }
+                        if (useLine) {
+                            isFeasible = isFeasible && lineConstraint.isFeasible(xRange[i], yRange[j]);
+                        }
+                        row.push(isFeasible ? 1 : 0);
+                    }
+                    feasibleMask.push(row);
+                }
+
+                // Add shading for circle constraint only
+                if (useCircle && !useLine) {
+                    traces.push({
+                        x: xRange,
+                        y: yRange,
+                        z: feasibleMask,
+                        type: 'contour',
+                        colorscale: [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,255,0,0.15)']],
+                        showscale: false,
+                        contours: {
+                            start: 0.5,
+                            end: 1.5,
+                            size: 1
+                        },
+                        hoverinfo: 'skip',
+                        name: 'Circle Feasible Region'
+                    });
+                }
+
+                // Add shading for line constraint only
+                if (useLine && !useCircle) {
+                    traces.push({
+                        x: xRange,
+                        y: yRange,
+                        z: feasibleMask,
+                        type: 'contour',
+                        colorscale: [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,255,0.15)']],
+                        showscale: false,
+                        contours: {
+                            start: 0.5,
+                            end: 1.5,
+                            size: 1
+                        },
+                        hoverinfo: 'skip',
+                        name: 'Line Feasible Region'
+                    });
+                }
+
+                // Add shading for intersection of both constraints
+                if (useCircle && useLine) {
+                    traces.push({
+                        x: xRange,
+                        y: yRange,
+                        z: feasibleMask,
+                        type: 'contour',
+                        colorscale: [[0, 'rgba(0,0,0,0)'], [1, 'rgba(255,255,0,0.2)']],
+                        showscale: false,
+                        contours: {
+                            start: 0.5,
+                            end: 1.5,
+                            size: 1
+                        },
+                        hoverinfo: 'skip',
+                        name: 'Feasible Region (Both)'
+                    });
+                }
+            }
+
+            // Constraint boundaries
+            if (document.getElementById('circleConstraint').checked) {
+                const theta = [];
+                const cx = [];
+                const cy = [];
+                for (let i = 0; i <= 100; i++) {
+                    const t = i * 2 * Math.PI / 100;
+                    theta.push(t);
+                    cx.push(circleConstraint.centerX + circleConstraint.radius * Math.cos(t));
+                    cy.push(circleConstraint.centerY + circleConstraint.radius * Math.sin(t));
+                }
+                traces.push({
+                    x: cx,
+                    y: cy,
+                    mode: 'lines',
+                    line: { color: 'red', width: 2, dash: 'dash' },
+                    name: 'Circle Constraint',
+                    showlegend: true
+                });
+            }
+
+            if (document.getElementById('lineConstraint').checked) {
+                const xLine = [bounds[0][0], bounds[0][1]];
+                const yLine = xLine.map(x => -(lineConstraint.a * x + lineConstraint.c) / lineConstraint.b);
+                traces.push({
+                    x: xLine,
+                    y: yLine,
+                    mode: 'lines',
+                    line: { color: 'blue', width: 2, dash: 'dash' },
+                    name: 'Line Constraint',
+                    showlegend: true
+                });
+            }
+
+            // Global minimum
+            const globalMin = currentFunction.globalMinimum();
+            traces.push({
+                x: [globalMin[0]],
+                y: [globalMin[1]],
+                mode: 'markers',
+                marker: { size: 15, color: 'green', symbol: 'star', line: { color: 'black', width: 1 } },
+                name: 'Global Minimum',
+                showlegend: true
+            });
+
+            // Trajectory
+            if (optimizer && optimizer.trajectory.length > 0) {
+                const trajX = optimizer.trajectory.map(p => p[0]);
+                const trajY = optimizer.trajectory.map(p => p[1]);
+
+                traces.push({
+                    x: trajX,
+                    y: trajY,
+                    mode: 'lines',
+                    line: { color: 'red', width: 2 },
+                    name: 'Trajectory',
+                    showlegend: true
+                });
+
+                // Initial point
+                traces.push({
+                    x: [trajX[0]],
+                    y: [trajY[0]],
+                    mode: 'markers',
+                    marker: { size: 10, color: 'blue', line: { color: 'black', width: 1 } },
+                    name: 'Initial Point',
+                    showlegend: true
+                });
+
+                // Current point
+                traces.push({
+                    x: [trajX[trajX.length - 1]],
+                    y: [trajY[trajY.length - 1]],
+                    mode: 'markers',
+                    marker: { size: 10, color: 'red', line: { color: 'black', width: 1 } },
+                    name: 'Current Point',
+                    showlegend: true
+                });
+
+                // Best solution
+                const best = optimizer.getBestSolution();
+                if (best) {
+                    traces.push({
+                        x: [best[0][0]],
+                        y: [best[0][1]],
+                        mode: 'markers',
+                        marker: { size: 12, color: 'magenta', line: { color: 'black', width: 1.5 } },
+                        name: 'Best Solution',
+                        showlegend: true
+                    });
+                }
+            } else if (initialPoint) {
+                traces.push({
+                    x: [initialPoint[0]],
+                    y: [initialPoint[1]],
+                    mode: 'markers',
+                    marker: { size: 10, color: 'blue', line: { color: 'black', width: 1 } },
+                    name: 'Initial Point',
+                    showlegend: true
+                });
+            }
+
+            const layout = {
+                title: currentFunction.name,
+                xaxis: { title: 'x', range: bounds[0] },
+                yaxis: { title: 'y', range: bounds[1] },
+                showlegend: true,
+                legend: { x: 1.05, y: 1 },
+                hovermode: 'closest'
+            };
+
+            const config = {
+                responsive: true
+            };
+
+            Plotly.newPlot('plot', traces, layout, config);
+
+            // Add click handler for setting initial point
+            document.getElementById('plot').on('plotly_click', function(data) {
+                if (data.points.length > 0) {
+                    const x = data.points[0].x;
+                    const y = data.points[0].y;
+                    initialPoint = [x, y];
+                    document.getElementById('initialPointLabel').textContent =
+                        `Initial Point: (${x.toFixed(3)}, ${y.toFixed(3)})`;
+                    updatePlot();
+                }
+            });
+        }
+
+        function updatePlot3D() {
+            const bounds = currentFunction.bounds;
+            const resolution = 50;
+
+            // Create meshgrid
+            const xRange = [];
+            const yRange = [];
+            for (let i = 0; i < resolution; i++) {
+                xRange.push(bounds[0][0] + i * (bounds[0][1] - bounds[0][0]) / (resolution - 1));
+                yRange.push(bounds[1][0] + i * (bounds[1][1] - bounds[1][0]) / (resolution - 1));
+            }
+
+            const Z = [];
+            for (let j = 0; j < resolution; j++) {
+                const row = [];
+                for (let i = 0; i < resolution; i++) {
+                    row.push(currentFunction.evaluate(xRange[i], yRange[j]));
+                }
+                Z.push(row);
+            }
+
+            const traces = [];
+
+            // Surface plot
+            traces.push({
+                x: xRange,
+                y: yRange,
+                z: Z,
+                type: 'surface',
+                colorscale: 'Cividis',
+                opacity: 0.85,
+                showscale: false
+            });
+
+            // Constraints
+            if (document.getElementById('circleConstraint').checked) {
+                const theta = [];
+                const cx = [];
+                const cy = [];
+                const cz = [];
+                for (let i = 0; i <= 100; i++) {
+                    const t = i * 2 * Math.PI / 100;
+                    const x = circleConstraint.centerX + circleConstraint.radius * Math.cos(t);
+                    const y = circleConstraint.centerY + circleConstraint.radius * Math.sin(t);
+                    cx.push(x);
+                    cy.push(y);
+                    cz.push(currentFunction.evaluate(x, y));
+                }
+                traces.push({
+                    x: cx,
+                    y: cy,
+                    z: cz,
+                    mode: 'lines',
+                    type: 'scatter3d',
+                    line: { color: 'red', width: 4 },
+                    name: 'Circle Constraint',
+                    showlegend: true
+                });
+            }
+
+            if (document.getElementById('lineConstraint').checked) {
+                const xLine = [bounds[0][0], bounds[0][1]];
+                const yLine = xLine.map(x => -(lineConstraint.a * x + lineConstraint.c) / lineConstraint.b);
+                const zLine = xLine.map((x, i) => currentFunction.evaluate(x, yLine[i]));
+                traces.push({
+                    x: xLine,
+                    y: yLine,
+                    z: zLine,
+                    mode: 'lines',
+                    type: 'scatter3d',
+                    line: { color: 'blue', width: 4 },
+                    name: 'Line Constraint',
+                    showlegend: true
+                });
+            }
+
+            // Global minimum
+            const globalMin = currentFunction.globalMinimum();
+            traces.push({
+                x: [globalMin[0]],
+                y: [globalMin[1]],
+                z: [globalMin[2]],
+                mode: 'markers',
+                type: 'scatter3d',
+                marker: { size: 8, color: 'green', symbol: 'diamond' },
+                name: 'Global Minimum',
+                showlegend: true
+            });
+
+            // Trajectory
+            if (optimizer && optimizer.trajectory.length > 0) {
+                const trajX = optimizer.trajectory.map(p => p[0]);
+                const trajY = optimizer.trajectory.map(p => p[1]);
+                const trajZ = optimizer.trajectory.map(p => currentFunction.evaluate(p[0], p[1]));
+
+                traces.push({
+                    x: trajX,
+                    y: trajY,
+                    z: trajZ,
+                    mode: 'lines',
+                    type: 'scatter3d',
+                    line: { color: 'red', width: 4 },
+                    name: 'Trajectory',
+                    showlegend: true
+                });
+
+                // Initial point
+                traces.push({
+                    x: [trajX[0]],
+                    y: [trajY[0]],
+                    z: [trajZ[0]],
+                    mode: 'markers',
+                    type: 'scatter3d',
+                    marker: { size: 6, color: 'blue' },
+                    name: 'Initial Point',
+                    showlegend: true
+                });
+
+                // Current point
+                traces.push({
+                    x: [trajX[trajX.length - 1]],
+                    y: [trajY[trajY.length - 1]],
+                    z: [trajZ[trajZ.length - 1]],
+                    mode: 'markers',
+                    type: 'scatter3d',
+                    marker: { size: 6, color: 'red' },
+                    name: 'Current Point',
+                    showlegend: true
+                });
+
+                // Best solution
+                const best = optimizer.getBestSolution();
+                if (best) {
+                    traces.push({
+                        x: [best[0][0]],
+                        y: [best[0][1]],
+                        z: [best[1]],
+                        mode: 'markers',
+                        type: 'scatter3d',
+                        marker: { size: 7, color: 'magenta' },
+                        name: 'Best Solution',
+                        showlegend: true
+                    });
+                }
+            } else if (initialPoint) {
+                const initZ = currentFunction.evaluate(initialPoint[0], initialPoint[1]);
+                traces.push({
+                    x: [initialPoint[0]],
+                    y: [initialPoint[1]],
+                    z: [initZ],
+                    mode: 'markers',
+                    type: 'scatter3d',
+                    marker: { size: 6, color: 'blue' },
+                    name: 'Initial Point',
+                    showlegend: true
+                });
+            }
+
+            const layout = {
+                title: currentFunction.name,
+                scene: {
+                    xaxis: { title: 'x', range: bounds[0] },
+                    yaxis: { title: 'y', range: bounds[1] },
+                    zaxis: { title: 'f(x,y)' }
+                },
+                showlegend: true,
+                legend: { x: 0, y: 1 }
+            };
+
+            const config = {
+                responsive: true
+            };
+
+            Plotly.newPlot('plot', traces, layout, config);
+        }
+
+        // ===========================
+        // Modal Functions
+        // ===========================
+        function showHowToUse() {
+            document.getElementById('howToUseModal').style.display = 'flex';
+        }
+
+        function showAbout() {
+            document.getElementById('aboutModal').style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Initialize on page load
+        window.onload = initialize;
+    </script>
+</body>
+</html>

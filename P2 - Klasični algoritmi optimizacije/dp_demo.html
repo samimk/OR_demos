@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shortest Path in Layered Graph (Dynamic Programming)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+        p.instructions {
+            font-size: 0.95em;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+        canvas {
+            border: 1px solid #c7d0d9;
+            background-color: #fdfdfd;
+            margin-bottom: 25px;
+            display: block; /* Centers the canvas */
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 1.05em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        #output {
+            margin-top: 25px;
+            padding: 20px;
+            border: 1px solid #a8dadc;
+            border-radius: 8px;
+            background-color: #e0f7fa;
+            min-height: 80px;
+            text-align: center;
+            font-size: 1.2em;
+            color: #333;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        #output strong {
+            color: #007bff;
+        }
+        .path-node {
+            font-weight: bold;
+            color: #28a745; /* Green for path nodes */
+        }
+        .path-cost {
+            font-weight: bold;
+            color: #dc3545; /* Red for total cost */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Shortest Path in a Directed Layered Graph</h1>
+        <p class="instructions">This demo visualizes the graph and calculates the shortest path from node 'a' to node 'h' using a Dynamic Programming approach.</p>
+        <canvas id="graphCanvas" width="800" height="400"></canvas>
+        <button onclick="calculateAndDisplayShortestPath()">Calculate Shortest Path</button>
+        <div id="output">
+            Click the button above to find the shortest path!
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        const outputDiv = document.getElementById('output');
+
+        // Define graph structure based on the image
+        // Nodes with their positions for drawing and labels
+        const nodes = {
+            a: { x: 50, y: 200, label: 'a' },
+            b: { x: 250, y: 100, label: 'b' },
+            c: { x: 250, y: 200, label: 'c' },
+            d: { x: 250, y: 300, label: 'd' },
+            e: { x: 450, y: 70, label: 'e' }, // Adjusted y for better spread
+            f: { x: 450, y: 200, label: 'f' },
+            g: { x: 450, y: 330, label: 'g' }, // Adjusted y for better spread
+            h: { x: 750, y: 200, label: 'h' }
+        };
+
+        // Edges with 'from', 'to', and 'weight'
+        const edges = [
+            { from: 'a', to: 'b', weight: 3 },
+            { from: 'a', to: 'c', weight: 2 },
+            { from: 'a', to: 'd', weight: 1 },
+
+            { from: 'b', to: 'e', weight: 3 },
+            { from: 'b', to: 'f', weight: 4 },
+            { from: 'b', to: 'g', weight: 5 },
+
+            { from: 'c', to: 'e', weight: 2 },
+            { from: 'c', to: 'f', weight: 3 },
+            { from: 'c', to: 'g', weight: 4 },
+
+            { from: 'd', to: 'e', weight: 4 },
+            { from: 'd', to: 'f', weight: 3 },
+            { from: 'd', to: 'g', weight: 2 },
+
+            { from: 'e', to: 'h', weight: 2 },
+            { from: 'f', to: 'h', weight: 3 },
+            { from: 'g', to: 'h', weight: 2 }
+        ];
+
+        const nodeRadius = 15;
+        const defaultEdgeColor = '#666';
+        const defaultNodeColor = '#333';
+        const pathColor = '#dc3545'; // Red for the shortest path
+        const pathNodeColor = '#28a745'; // Green for nodes on the shortest path
+        const weightColor = '#007bff'; // Blue for edge weights
+
+        // --- Drawing Functions ---
+        function drawArrow(ctx, fromX, fromY, toX, toY, color) {
+            const headlen = 10; // length of head in pixels
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw arrow head
+            ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.stroke();
+        }
+
+        function drawGraph(highlightedPath = []) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+
+            // Draw edges
+            edges.forEach(edge => {
+                const fromNode = nodes[edge.from];
+                const toNode = nodes[edge.to];
+                const isPathEdge = highlightedPath.includes(edge.from) && highlightedPath.includes(edge.to) &&
+                                   (highlightedPath.indexOf(edge.to) - highlightedPath.indexOf(edge.from) === 1);
+
+                drawArrow(ctx, fromNode.x, fromNode.y, toNode.x, toNode.y, isPathEdge ? pathColor : defaultEdgeColor);
+
+                // Draw weight
+                ctx.fillStyle = isPathEdge ? pathColor : weightColor;
+                ctx.font = '14px Arial';
+                const midX = (fromNode.x + toNode.x) / 2;
+                const midY = (fromNode.y + toNode.y) / 2;
+                ctx.fillText(edge.weight, midX + (fromNode.y < toNode.y ? 10 : -10), midY + (fromNode.x < toNode.x ? -10 : 10));
+            });
+
+            // Draw nodes
+            for (const nodeKey in nodes) {
+                const node = nodes[nodeKey];
+                const isPathNode = highlightedPath.includes(nodeKey);
+
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2, false);
+                ctx.fillStyle = isPathNode ? pathNodeColor : '#f8f9fa'; // Fill with light color
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = isPathNode ? pathNodeColor : defaultNodeColor; // Border color
+                ctx.stroke();
+
+                ctx.fillStyle = isPathNode ? 'white' : defaultNodeColor; // Text color
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(node.label, node.x, node.y);
+            }
+        }
+
+        // --- Dynamic Programming Algorithm ---
+        function findShortestPathDP(startNode, endNode) {
+            const distances = {}; // Stores the shortest distance from startNode to each node
+            const predecessors = {}; // Stores the predecessor node to reconstruct the path
+            const nodeKeys = Object.keys(nodes);
+
+            // Initialize distances: infinity for all nodes except startNode (0)
+            nodeKeys.forEach(node => {
+                distances[node] = Infinity;
+                predecessors[node] = null;
+            });
+            distances[startNode] = 0;
+
+            // Group nodes by layer (manual for this specific graph)
+            // Layer 0: a
+            // Layer 1: b, c, d
+            // Layer 2: e, f, g
+            // Layer 3: h
+            const layers = [
+                ['a'],
+                ['b', 'c', 'd'],
+                ['e', 'f', 'g'],
+                ['h']
+            ];
+
+            // Process nodes layer by layer
+            for (let i = 0; i < layers.length; i++) {
+                const currentLayerNodes = layers[i];
+                currentLayerNodes.forEach(u => {
+                    // Only process if 'u' is reachable
+                    if (distances[u] === Infinity) return;
+
+                    // Iterate over all edges to find outgoing edges from 'u'
+                    edges.forEach(edge => {
+                        if (edge.from === u) {
+                            const v = edge.to;
+                            const weight = edge.weight;
+
+                            // Relaxation step
+                            if (distances[u] + weight < distances[v]) {
+                                distances[v] = distances[u] + weight;
+                                predecessors[v] = u;
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Reconstruct the path
+            const path = [];
+            let currentNode = endNode;
+            if (distances[endNode] === Infinity) {
+                return { path: [], cost: Infinity }; // No path found
+            }
+
+            while (currentNode !== null) {
+                path.unshift(currentNode); // Add to the beginning
+                currentNode = predecessors[currentNode];
+            }
+
+            // If the path doesn't start with 'a', it means 'a' wasn't reachable or linked correctly
+            if (path[0] !== startNode) {
+                 return { path: [], cost: Infinity };
+            }
+
+            return { path: path, cost: distances[endNode] };
+        }
+
+        function calculateAndDisplayShortestPath() {
+            const startNode = 'a';
+            const endNode = 'h';
+            const result = findShortestPathDP(startNode, endNode);
+
+            if (result.cost === Infinity) {
+                outputDiv.innerHTML = '<strong>No path found from ' + startNode + ' to ' + endNode + '.</strong>';
+                drawGraph(); // Draw graph without highlighting
+            } else {
+                outputDiv.innerHTML = `
+                    Shortest Path: <span class="path-node">${result.path.join(' &rarr; ')}</span><br>
+                    Total Cost: <span class="path-cost">${result.cost}</span>
+                `;
+                drawGraph(result.path); // Draw graph with highlighted path
+            }
+        }
+
+        // Initial draw of the graph when the page loads
+        drawGraph();
+    </script>
+</body>
+</html>
