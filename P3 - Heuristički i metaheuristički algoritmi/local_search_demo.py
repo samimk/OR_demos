@@ -243,17 +243,27 @@ class LocalSearchDemo:
                                        list(FUNCTIONS.keys()),
                                        active=list(FUNCTIONS.keys()).index(self.selected_function))
         self.radio_func.on_clicked(self.on_function_changed)
-        self.ax_radio_func.set_title('Funkcija', fontweight='bold')
+        self.ax_radio_func.set_title('Funkcija', fontweight='bold', fontsize=12)
+        # Povećaj veličinu teksta i krugova za radio buttons
+        for label in self.radio_func.labels:
+            label.set_fontsize(11)
+        for circle in self.radio_func.circles:
+            circle.set_radius(0.08)
 
         # Radio buttons - tip prikaza
         self.radio_plot = RadioButtons(self.ax_radio_plot,
                                        ['contour', '3D mesh'],
                                        active=0 if self.plot_type == 'contour' else 1)
         self.radio_plot.on_clicked(self.on_plot_type_changed)
-        self.ax_radio_plot.set_title('Tip prikaza', fontweight='bold')
+        self.ax_radio_plot.set_title('Tip prikaza', fontweight='bold', fontsize=12)
+        # Povećaj veličinu teksta i krugova za radio buttons
+        for label in self.radio_plot.labels:
+            label.set_fontsize(11)
+        for circle in self.radio_plot.circles:
+            circle.set_radius(0.08)
 
         # Slider: Delta (veličina koraka)
-        ax_slider_delta = plt.axes([0.70, 0.37, 0.15, 0.02])
+        ax_slider_delta = plt.axes([0.74, 0.37, 0.15, 0.02])
         self.slider_delta = Slider(ax_slider_delta, 'Delta (Δx):',
                                    0.1, 2.0, valinit=0.5, valstep=0.1)
         self.slider_delta.on_changed(self.on_delta_changed)
@@ -318,9 +328,13 @@ class LocalSearchDemo:
 
     def redraw_plot(self):
         """Ponovno crtaj cijelu figuru"""
+        # Disconnect event handler prije zatvaranja figure
+        if hasattr(self, 'cid') and self.cid is not None:
+            self.fig.canvas.mpl_disconnect(self.cid)
+
         plt.close(self.fig)
         self.setup_figure()
-        plt.draw()
+        plt.show(block=False)
 
     def on_click(self, event):
         """Postavi početnu tačku klikom miša"""
