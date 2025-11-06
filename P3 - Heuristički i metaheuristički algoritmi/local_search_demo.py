@@ -337,6 +337,18 @@ class LocalSearchDemo:
                                    color='lightgray', hovercolor='gray')
         self.button_reset.on_clicked(self.on_reset)
 
+        # Dugme: About
+        ax_button_about = plt.axes([0.81, 0.28, button_width, button_height])
+        self.button_about = Button(ax_button_about, 'About',
+                                   color='lightcyan', hovercolor='cyan')
+        self.button_about.on_clicked(self.on_about)
+
+        # Dugme: Help
+        ax_button_help = plt.axes([0.81, 0.23, button_width, button_height])
+        self.button_help = Button(ax_button_help, 'Help',
+                                  color='lightsteelblue', hovercolor='steelblue')
+        self.button_help.on_clicked(self.on_help)
+
     def on_function_changed(self, label):
         """Promjena funkcije"""
         self.selected_function = label
@@ -672,6 +684,55 @@ class LocalSearchDemo:
             self.current_neighbors = []
             self.best_neighbor = None
             self.update_plot()
+
+    def on_about(self, event):
+        """Prikaži About dialog"""
+        import tkinter as tk
+        from tkinter import messagebox
+
+        root = tk.Tk()
+        root.withdraw()  # Sakrij glavni prozor
+        messagebox.showinfo("O aplikaciji",
+                           "Optimizacija resursa\n\n"
+                           "Red. prof. dr Samim Konjicija\n\n"
+                           "Novembar 2025. godine")
+        root.destroy()
+
+    def on_help(self, event):
+        """Prikaži Help dialog"""
+        import tkinter as tk
+        from tkinter import messagebox
+
+        help_text = """UPUTE ZA KORIŠTENJE - Lokalno pretraživanje
+
+OSNOVNE FUNKCIJE:
+• Klik na grafik - postavite početnu tačku za pretraživanje
+• Slučajan start - generiši slučajnu početnu tačku
+• Jedan korak - izvršite jednu iteraciju algoritma
+• Do kraja - izvršite kompletno pretraživanje do lokalnog minimuma
+• Reset - vratite aplikaciju na početne postavke
+
+KONTROLE:
+• Radio buttons (Funkcija) - izaberite test funkciju za optimizaciju
+  (Kvadratna, Rastrigin, Ackley, Griewank, Levy)
+• Radio buttons (Tip prikaza) - izaberite contour ili 3D mesh prikaz
+• Slider (Delta) - podesite veličinu koraka pretrage (0.1 - 2.0)
+
+LEGENDA:
+• Zelena zvijezda - globalni minimum funkcije
+• Crveni krug - trenutna tačka
+• Narančasti kvadrati - susjedne tačke (okolina 8 tačaka)
+• Zeleni dijamant - najbolji susjed
+• Ljubičasta linija - putanja pretraživanja
+
+NAPOMENA:
+Algoritam koristi steepest descent strategiju - u svakoj iteraciji
+se pomijerite na najbolju susjednu tačku dok god ima poboljšanja."""
+
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showinfo("Pomoć", help_text)
+        root.destroy()
 
 # Pokreni demo
 if __name__ == "__main__":

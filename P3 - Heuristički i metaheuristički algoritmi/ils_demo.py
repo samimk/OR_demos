@@ -213,6 +213,18 @@ class ILSVisualizer:
         return x, path
 
     def setup_gui(self):
+        # Menu bar
+        menubar = tk.Menu(self.master)
+        self.master.config(menu=menubar)
+
+        # Kreiraj meni
+        help_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Meni", menu=help_menu)
+        help_menu.add_command(label="About", command=self.show_about)
+        help_menu.add_command(label="Help", command=self.show_help)
+        help_menu.add_separator()
+        help_menu.add_command(label="Izlaz", command=self.master.quit)
+
         # Kontrolni panel
         control_frame = ttk.Frame(self.master, padding="10")
         control_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -497,6 +509,53 @@ class ILSVisualizer:
         self.reset_search()
         for i in range(self.num_cycles):
             self.master.after(1500 * (i + 1), self.next_step)
+
+    def show_about(self):
+        """Prikaži About dialog"""
+        from tkinter import messagebox
+        messagebox.showinfo("O aplikaciji",
+                           "Optimizacija resursa\n\n"
+                           "Red. prof. dr Samim Konjicija\n\n"
+                           "Novembar 2025. godine")
+
+    def show_help(self):
+        """Prikaži Help dialog"""
+        from tkinter import messagebox
+
+        help_text = """UPUTE ZA KORIŠTENJE - ILS (Iterated Local Search)
+
+OSNOVNE FUNKCIJE:
+• Pokreni ILS - izvršava automatski kompletnu ILS pretragu sa odabranim
+  brojem ciklusa i pauzama između koraka za vizualizaciju
+• Sljedeći korak - izvršava jedan ciklus ILS algoritma ručno
+• Resetuj - vraća aplikaciju u početno stanje
+
+KONTROLE:
+• Funkcija - izaberite multimodalnu funkciju za optimizaciju:
+  - Rastrigin: simetrična funkcija sa mnogo lokalnih minimuma
+  - Levy: asimetrična valovita funkcija
+  - Griewank: kombinacija kvadratne i kosinusne komponente
+  - Ackley: funkcija sa gotovo ravnom spoljašnjom oblašću
+
+• Broj ciklusa - podesite koliko iteracija ILS-a će se izvršiti (3-20)
+• Korak pretrage - podesite veličinu koraka za lokalno pretraživanje (0.001-0.1)
+
+ALGORITAM:
+1. Prvi ciklus: slučajna početna tačka lijevo od optimuma
+2. Drugi ciklus: slučajna početna tačka desno od optimuma
+3. Naredni ciklusi: fituje kvadratnu funkciju kroz pronađene minimume
+   i koristi njen minimum kao novu početnu tačku
+
+LEGENDA NA GRAFIKU:
+• Plava linija - odabrana multimodalna funkcija
+• Žuta zvijezda - globalni minimum
+• Zeleni krugovi - početne tačke lokalnog pretraživanja
+• Crveni krugovi - pronađeni lokalni minimumi
+• Isprekidane linije - aproksimacije kvadratnim funkcijama
+• Crni kvadrati - minimumi kvadratnih aproksimacija
+• Obojene putanje - trajektorije lokalnog pretraživanja"""
+
+        messagebox.showinfo("Pomoć", help_text)
 
 # Pokretanje aplikacije
 if __name__ == "__main__":
