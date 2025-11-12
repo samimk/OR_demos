@@ -135,6 +135,8 @@ class TabuSearchDemo:
         self.finished = False
         self.tabu_list = []  # Tabu lista (za tabu search)
         self.stop_requested = False  # Flag za zaustavljanje pretraživanja
+        self.best_found_solution = None  # Najbolja tačka otkrivena tokom izvršavanja
+        self.best_found_value = float('inf')  # Najbolja vrijednost otkrivena tokom izvršavanja
 
         # Setup GUI
         self.setup_gui()
@@ -398,6 +400,14 @@ class TabuSearchDemo:
                               c='lime', s=150, marker='D',
                               edgecolors='darkgreen', linewidths=2,
                               label='Najbolji susjed', zorder=8)
+
+            # ★ Najbolja otkrivena tačka (BIJELA ZVIJEZDA)
+            if self.best_found_solution:
+                z_best_found = self.objective_function(self.best_found_solution)
+                self.ax.scatter([self.best_found_solution[0]], [self.best_found_solution[1]], [z_best_found],
+                              c='gold', s=300, marker='*',
+                              edgecolors='darkorange', linewidths=3,
+                              label='★ Najbolja otkrivena', zorder=11)
         else:
             # 2D prikaz
             # Nacrtaj historiju (putanju)
@@ -447,6 +457,13 @@ class TabuSearchDemo:
                               edgecolors='darkgreen', linewidths=2,
                               label='Najbolji susjed', zorder=8)
 
+            # ★ Najbolja otkrivena tačka (ZLATNA ZVIJEZDA)
+            if self.best_found_solution:
+                self.ax.scatter([self.best_found_solution[0]], [self.best_found_solution[1]],
+                              c='gold', s=300, marker='*',
+                              edgecolors='darkorange', linewidths=3,
+                              label='★ Najbolja otkrivena', zorder=11)
+
         self.ax.legend(loc='upper right', fontsize=9)
         self.canvas.draw()
 
@@ -468,6 +485,12 @@ class TabuSearchDemo:
             info += f"Trenutna tačka:\n"
             info += f"  x = [{x[0]:.4f}, {x[1]:.4f}]\n"
             info += f"  f(x) = {f_x:.6f}\n\n"
+
+            # Najbolja otkrivena tačka
+            if self.best_found_solution:
+                info += f"★ NAJBOLJA OTKRIVENA:\n"
+                info += f"  x = [{self.best_found_solution[0]:.4f}, {self.best_found_solution[1]:.4f}]\n"
+                info += f"  f(x) = {self.best_found_value:.6f}\n\n"
 
             # Udaljenost od globalnog minimuma
             dist = np.sqrt((x[0] - self.global_min[0])**2 +
@@ -528,6 +551,8 @@ class TabuSearchDemo:
         self.iteration = 0
         self.finished = False
         self.tabu_list = []
+        self.best_found_solution = None
+        self.best_found_value = float('inf')
 
         # Ponovno crtanje
         self.draw_objective_function()
@@ -548,6 +573,8 @@ class TabuSearchDemo:
         self.iteration = 0
         self.finished = False
         self.tabu_list = []
+        self.best_found_solution = None
+        self.best_found_value = float('inf')
 
         # Ponovno crtanje
         self.draw_objective_function()
@@ -596,8 +623,13 @@ class TabuSearchDemo:
             self.best_neighbor = None
             self.tabu_list = []
 
+            # Postavi početnu tačku kao najbolju
+            f_x0 = self.objective_function(x0)
+            self.best_found_solution = x0.copy()
+            self.best_found_value = f_x0
+
             print(f"\nPostavljena početna tačka: x = [{x0[0]:.3f}, {x0[1]:.3f}], " +
-                  f"f(x) = {self.objective_function(x0):.3f}")
+                  f"f(x) = {f_x0:.3f}")
 
             self.draw_objective_function()
             self.update_plot()
@@ -616,8 +648,13 @@ class TabuSearchDemo:
         self.best_neighbor = None
         self.tabu_list = []
 
+        # Postavi početnu tačku kao najbolju
+        f_x0 = self.objective_function(x0)
+        self.best_found_solution = x0.copy()
+        self.best_found_value = f_x0
+
         print(f"\nNova početna tačka: x = [{x0[0]:.3f}, {x0[1]:.3f}], " +
-              f"f(x) = {self.objective_function(x0):.3f}")
+              f"f(x) = {f_x0:.3f}")
 
         self.draw_objective_function()
         self.update_plot()
@@ -662,11 +699,18 @@ class TabuSearchDemo:
         self.best_neighbor = neighbors[best_neighbor_idx]
         best_value = neighbor_values[best_neighbor_idx]
 
+        # Ažuriraj najbolje otkriveno rješenje
+        if current_value < self.best_found_value:
+            self.best_found_solution = self.current_solution.copy()
+            self.best_found_value = current_value
+
         print(f"\nIteracija {self.iteration + 1}:")
         print(f"  Trenutno: x = [{self.current_solution[0]:.3f}, {self.current_solution[1]:.3f}], " +
               f"f(x) = {current_value:.3f}")
         print(f"  Najbolji susjed: x = [{self.best_neighbor[0]:.3f}, {self.best_neighbor[1]:.3f}], " +
               f"f(x) = {best_value:.3f}")
+        print(f"  ★ NAJBOLJE OTKRIVENO: x = [{self.best_found_solution[0]:.3f}, {self.best_found_solution[1]:.3f}], " +
+              f"f(x) = {self.best_found_value:.3f}")
 
         # Provjeri uslov zaustavljanja
         if best_value >= current_value:
@@ -715,6 +759,11 @@ class TabuSearchDemo:
         self.best_neighbor = allowed_neighbors[best_neighbor_idx]
         best_value = neighbor_values[best_neighbor_idx]
 
+        # Ažuriraj najbolje otkriveno rješenje
+        if current_value < self.best_found_value:
+            self.best_found_solution = self.current_solution.copy()
+            self.best_found_value = current_value
+
         print(f"\nIteracija {self.iteration + 1} (Tabu Search):")
         print(f"  Trenutno: x = [{self.current_solution[0]:.3f}, {self.current_solution[1]:.3f}], " +
               f"f(x) = {current_value:.3f}")
@@ -722,6 +771,8 @@ class TabuSearchDemo:
         print(f"  Dozvoljeni susjedi: {len(allowed_neighbors)}/8")
         print(f"  Najbolji dozvoljeni susjed: x = [{self.best_neighbor[0]:.3f}, {self.best_neighbor[1]:.3f}], " +
               f"f(x) = {best_value:.3f}")
+        print(f"  ★ NAJBOLJE OTKRIVENO: x = [{self.best_found_solution[0]:.3f}, {self.best_found_solution[1]:.3f}], " +
+              f"f(x) = {self.best_found_value:.3f}")
 
         # Dodaj trenutnu tačku u tabu listu
         self.tabu_list.append(list(self.current_solution))
@@ -763,9 +814,19 @@ class TabuSearchDemo:
             self.root.update()
             self.root.after(100)  # Pauza od 100ms
 
+        # Prikaži dijalog sa najboljom otkrivenom tačkom
+        if self.best_found_solution is not None:
+            result_message = (
+                f"PRETRAŽIVANJE ZAVRŠENO!\n\n"
+                f"★ NAJBOLJA OTKRIVENA TAČKA ★\n\n"
+                f"x = [{self.best_found_solution[0]:.6f}, {self.best_found_solution[1]:.6f}]\n\n"
+                f"f(x) = {self.best_found_value:.6f}\n\n"
+                f"Ukupno iteracija: {self.iteration}"
+            )
+            messagebox.showinfo("Rezultat pretraživanja", result_message)
+
         if self.stop_requested:
             print("Pretraživanje zaustavljeno od strane korisnika!")
-            messagebox.showinfo("Info", "Pretraživanje zaustavljeno!")
             self.stop_requested = False
         elif not self.finished:
             print("Dostignut maksimalan broj iteracija!")
@@ -781,6 +842,8 @@ class TabuSearchDemo:
         self.finished = False
         self.tabu_list = []
         self.stop_requested = False
+        self.best_found_solution = None
+        self.best_found_value = float('inf')
 
         self.draw_objective_function()
         self.update_info_text()
@@ -791,6 +854,17 @@ class TabuSearchDemo:
         """Zaustavi pretraživanje"""
         self.stop_requested = True
         print("\nZaustavljanje pretraživanja zatraženo...")
+
+        # Prikaži dijalog sa najboljom otkrivenom tačkom
+        if self.best_found_solution is not None:
+            result_message = (
+                f"PRETRAŽIVANJE ZAUSTAVLJENO!\n\n"
+                f"★ NAJBOLJA OTKRIVENA TAČKA ★\n\n"
+                f"x = [{self.best_found_solution[0]:.6f}, {self.best_found_solution[1]:.6f}]\n\n"
+                f"f(x) = {self.best_found_value:.6f}\n\n"
+                f"Ukupno iteracija: {self.iteration}"
+            )
+            messagebox.showinfo("Rezultat pretraživanja", result_message)
 
     def switch_to_2d(self):
         """Prebaci na 2D contour prikaz"""
