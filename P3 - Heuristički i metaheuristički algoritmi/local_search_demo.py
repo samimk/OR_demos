@@ -183,7 +183,11 @@ class LocalSearchDemo:
         # Event za klik mišem
         self.cid = self.fig.canvas.mpl_connect('button_press_event', self.on_click)
 
-        plt.tight_layout()
+        # Pokušaj tight_layout, ali ignoriši greške
+        try:
+            self.fig.tight_layout()
+        except:
+            pass  # Ignoriši greške sa layout-om
 
     def draw_objective_function(self):
         """Nacrtaj objektive funkciju"""
