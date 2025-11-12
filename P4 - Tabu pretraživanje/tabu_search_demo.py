@@ -9,6 +9,7 @@ from tkinter import ttk, messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.patches as patches
+from mpl_toolkits.mplot3d import Axes3D
 
 # ============================================================================
 # DEFINICIJE TEST FUNKCIJA
@@ -122,6 +123,8 @@ class TabuSearchDemo:
         self.delta = 0.5  # Veličina koraka
         self.tabu_tenure = 7  # Dužina tabu liste
         self.search_algorithm = 'Lokalno pretraživanje'  # ili 'Tabu pretraživanje'
+        self.max_iterations = 5000  # Maksimalan broj iteracija
+        self.view_mode = '2D'  # '2D' ili '3D'
 
         # Stanje algoritma
         self.current_solution = None
@@ -131,6 +134,7 @@ class TabuSearchDemo:
         self.iteration = 0
         self.finished = False
         self.tabu_list = []  # Tabu lista (za tabu search)
+        self.stop_requested = False  # Flag za zaustavljanje pretraživanja
 
         # Setup GUI
         self.setup_gui()
@@ -141,6 +145,16 @@ class TabuSearchDemo:
 
     def setup_gui(self):
         """Postavi GUI elemente"""
+
+        # Kreiraj meni bar
+        menubar = tk.Menu(self.root)
+        self.root.config(menu=menubar)
+
+        # Help meni
+        help_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="O aplikaciji", command=self.on_about)
+        help_menu.add_command(label="Uputstvo", command=self.on_help)
 
         # Glavni kontejner
         main_container = ttk.Frame(self.root)
@@ -218,6 +232,16 @@ class TabuSearchDemo:
         self.tabu_label = ttk.Label(params_frame, text=f"Tabu lista = {self.tabu_tenure}")
         self.tabu_label.pack(anchor=tk.W)
 
+        # Max iterations slider
+        ttk.Label(params_frame, text="Maks. broj iteracija:").pack(anchor=tk.W, pady=(10, 0))
+        self.max_iter_var = tk.IntVar(value=5000)
+        self.max_iter_scale = ttk.Scale(params_frame, from_=100, to=10000,
+                                       variable=self.max_iter_var, orient=tk.HORIZONTAL,
+                                       command=self.on_max_iter_changed)
+        self.max_iter_scale.pack(fill=tk.X, pady=(0, 5))
+        self.max_iter_label = ttk.Label(params_frame, text=f"Max iter = {self.max_iterations}")
+        self.max_iter_label.pack(anchor=tk.W)
+
         # Dugmad
         buttons_frame = ttk.LabelFrame(right_frame, text="Akcije", padding=10)
         buttons_frame.pack(fill=tk.X, pady=5)
@@ -230,17 +254,22 @@ class TabuSearchDemo:
                   command=self.on_step).pack(fill=tk.X, pady=2)
         ttk.Button(buttons_frame, text="Do kraja",
                   command=self.on_complete).pack(fill=tk.X, pady=2)
+        ttk.Button(buttons_frame, text="Zaustavi",
+                  command=self.on_stop).pack(fill=tk.X, pady=2)
         ttk.Button(buttons_frame, text="Reset",
                   command=self.on_reset).pack(fill=tk.X, pady=2)
 
-        # Help i About dugmad
-        help_frame = ttk.Frame(buttons_frame)
-        help_frame.pack(fill=tk.X, pady=(10, 0))
+        # Dugmad za prikaz
+        view_frame = ttk.LabelFrame(right_frame, text="Prikaz", padding=10)
+        view_frame.pack(fill=tk.X, pady=5)
 
-        ttk.Button(help_frame, text="About",
-                  command=self.on_about).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
-        ttk.Button(help_frame, text="Help",
-                  command=self.on_help).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
+        view_buttons_frame = ttk.Frame(view_frame)
+        view_buttons_frame.pack(fill=tk.X)
+
+        ttk.Button(view_buttons_frame, text="2D (Contour)",
+                  command=self.switch_to_2d).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
+        ttk.Button(view_buttons_frame, text="3D (Mesh)",
+                  command=self.switch_to_3d).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
 
         # Info tekst
         info_frame = ttk.LabelFrame(right_frame, text="Status", padding=10)
@@ -261,11 +290,17 @@ class TabuSearchDemo:
 
     def draw_objective_function(self):
         """Nacrtaj objektivnu funkciju"""
-        self.ax.clear()
+        # Ukloni stari axes i kreiraj novi prema view_mode
+        self.fig.clear()
+
+        if self.view_mode == '3D':
+            self.ax = self.fig.add_subplot(111, projection='3d')
+        else:
+            self.ax = self.fig.add_subplot(111)
 
         # Generiši mrežu tačaka
-        x1 = np.linspace(self.x_range[0], self.x_range[1], 200)
-        x2 = np.linspace(self.x_range[0], self.x_range[1], 200)
+        x1 = np.linspace(self.x_range[0], self.x_range[1], 100)
+        x2 = np.linspace(self.x_range[0], self.x_range[1], 100)
         X1, X2 = np.meshgrid(x1, x2)
         Z = np.zeros_like(X1)
 
@@ -273,76 +308,144 @@ class TabuSearchDemo:
             for j in range(X1.shape[1]):
                 Z[i, j] = self.objective_function([X1[i, j], X2[i, j]])
 
-        # Konturni dijagram
-        contour = self.ax.contour(X1, X2, Z, levels=20, cmap='viridis', alpha=0.6)
-        self.ax.clabel(contour, inline=True, fontsize=8)
+        if self.view_mode == '3D':
+            # 3D mesh prikaz
+            self.ax.plot_surface(X1, X2, Z, cmap='viridis', alpha=0.7,
+                                edgecolor='none', antialiased=True)
 
-        # Označi globalni minimum
-        self.ax.scatter([self.global_min[0]], [self.global_min[1]],
-                       c='green', s=200, marker='*',
-                       edgecolors='darkgreen', linewidths=2,
-                       label=f'Globalni minimum {self.global_min}', zorder=10)
+            # Označi globalni minimum
+            z_min = self.objective_function(self.global_min)
+            self.ax.scatter([self.global_min[0]], [self.global_min[1]], [z_min],
+                           c='green', s=200, marker='*',
+                           edgecolors='darkgreen', linewidths=2,
+                           label=f'Globalni minimum {self.global_min}', zorder=10)
 
-        self.ax.set_xlabel('x₁', fontsize=12, fontweight='bold')
-        self.ax.set_ylabel('x₂', fontsize=12, fontweight='bold')
-        self.ax.set_title(f'{self.search_algorithm} - {self.selected_function}',
-                         fontsize=13, fontweight='bold')
-        self.ax.grid(True, alpha=0.3)
+            self.ax.set_xlabel('x₁', fontsize=11, fontweight='bold')
+            self.ax.set_ylabel('x₂', fontsize=11, fontweight='bold')
+            self.ax.set_zlabel('f(x)', fontsize=11, fontweight='bold')
+            self.ax.set_title(f'{self.search_algorithm} - {self.selected_function} (3D)',
+                             fontsize=13, fontweight='bold')
+        else:
+            # 2D konturni dijagram
+            contour = self.ax.contour(X1, X2, Z, levels=20, cmap='viridis', alpha=0.6)
+            self.ax.clabel(contour, inline=True, fontsize=8)
+
+            # Označi globalni minimum
+            self.ax.scatter([self.global_min[0]], [self.global_min[1]],
+                           c='green', s=200, marker='*',
+                           edgecolors='darkgreen', linewidths=2,
+                           label=f'Globalni minimum {self.global_min}', zorder=10)
+
+            self.ax.set_xlabel('x₁', fontsize=12, fontweight='bold')
+            self.ax.set_ylabel('x₂', fontsize=12, fontweight='bold')
+            self.ax.set_title(f'{self.search_algorithm} - {self.selected_function} (2D)',
+                             fontsize=13, fontweight='bold')
+            self.ax.grid(True, alpha=0.3)
+            self.ax.set_xlim(self.x_range)
+            self.ax.set_ylim(self.x_range)
+
         self.ax.legend(loc='upper right', fontsize=9)
-        self.ax.set_xlim(self.x_range)
-        self.ax.set_ylim(self.x_range)
+
+        # Reconnect click event
+        self.canvas.mpl_connect('button_press_event', self.on_click)
 
         self.canvas.draw()
 
     def update_plot(self):
         """Ažuriraj grafički prikaz"""
 
-        # Nacrtaj historiju (putanju)
-        if len(self.history) > 1:
-            history_x = [h[0] for h in self.history]
-            history_y = [h[1] for h in self.history]
-            self.ax.plot(history_x, history_y, 'o-', color='purple',
-                        linewidth=2, markersize=6, alpha=0.6, label='Putanja')
+        if self.view_mode == '3D':
+            # 3D prikaz
+            # Nacrtaj historiju (putanju)
+            if len(self.history) > 1:
+                history_x = [h[0] for h in self.history]
+                history_y = [h[1] for h in self.history]
+                history_z = [self.objective_function(h) for h in self.history]
+                self.ax.plot(history_x, history_y, history_z, 'o-', color='purple',
+                            linewidth=2, markersize=6, alpha=0.6, label='Putanja')
 
-        # Nacrtaj trenutno rješenje
-        if self.current_solution:
-            self.ax.scatter([self.current_solution[0]], [self.current_solution[1]],
-                          c='red', s=200, marker='o',
-                          edgecolors='darkred', linewidths=2.5,
-                          label='Trenutna tačka', zorder=9)
+            # Nacrtaj trenutno rješenje
+            if self.current_solution:
+                z_current = self.objective_function(self.current_solution)
+                self.ax.scatter([self.current_solution[0]], [self.current_solution[1]], [z_current],
+                              c='red', s=200, marker='o',
+                              edgecolors='darkred', linewidths=2.5,
+                              label='Trenutna tačka', zorder=9)
 
-            # Nacrtaj pravougaonik koji predstavlja okolinu
-            rect_size = self.delta * 2
-            rect = patches.Rectangle((self.current_solution[0] - self.delta,
-                                     self.current_solution[1] - self.delta),
-                                    rect_size, rect_size,
-                                    linewidth=2, edgecolor='orange',
-                                    facecolor='orange', alpha=0.1, linestyle='--')
-            self.ax.add_patch(rect)
+            # Nacrtaj SVE susjedne tačke
+            if self.current_neighbors:
+                neighbors_x = [n[0] for n in self.current_neighbors]
+                neighbors_y = [n[1] for n in self.current_neighbors]
+                neighbors_z = [self.objective_function(n) for n in self.current_neighbors]
+                self.ax.scatter(neighbors_x, neighbors_y, neighbors_z,
+                              c='orange', s=100, marker='s',
+                              edgecolors='darkorange', linewidths=1.5,
+                              label='Okolina (8 tačaka)', zorder=7, alpha=0.7)
 
-        # Nacrtaj SVE susjedne tačke
-        if self.current_neighbors:
-            neighbors_x = [n[0] for n in self.current_neighbors]
-            neighbors_y = [n[1] for n in self.current_neighbors]
-            self.ax.scatter(neighbors_x, neighbors_y,
-                          c='orange', s=100, marker='s',
-                          edgecolors='darkorange', linewidths=1.5,
-                          label='Okolina (8 tačaka)', zorder=7, alpha=0.7)
+            # Označi tabu tačke (ako koristimo tabu search)
+            if self.search_algorithm == 'Tabu pretraživanje' and self.tabu_list:
+                tabu_x = [t[0] for t in self.tabu_list]
+                tabu_y = [t[1] for t in self.tabu_list]
+                tabu_z = [self.objective_function(t) for t in self.tabu_list]
+                self.ax.scatter(tabu_x, tabu_y, tabu_z,
+                              c='red', s=80, marker='x',
+                              linewidths=2, label='Tabu lista', zorder=8)
 
-        # Označi tabu tačke (ako koristimo tabu search)
-        if self.search_algorithm == 'Tabu pretraživanje' and self.tabu_list:
-            tabu_x = [t[0] for t in self.tabu_list]
-            tabu_y = [t[1] for t in self.tabu_list]
-            self.ax.scatter(tabu_x, tabu_y,
-                          c='red', s=80, marker='x',
-                          linewidths=2, label='Tabu lista', zorder=8)
+            # Najbolji susjed
+            if self.best_neighbor:
+                z_best = self.objective_function(self.best_neighbor)
+                self.ax.scatter([self.best_neighbor[0]], [self.best_neighbor[1]], [z_best],
+                              c='lime', s=150, marker='D',
+                              edgecolors='darkgreen', linewidths=2,
+                              label='Najbolji susjed', zorder=8)
+        else:
+            # 2D prikaz
+            # Nacrtaj historiju (putanju)
+            if len(self.history) > 1:
+                history_x = [h[0] for h in self.history]
+                history_y = [h[1] for h in self.history]
+                self.ax.plot(history_x, history_y, 'o-', color='purple',
+                            linewidth=2, markersize=6, alpha=0.6, label='Putanja')
 
-        # Najbolji susjed
-        if self.best_neighbor:
-            self.ax.scatter([self.best_neighbor[0]], [self.best_neighbor[1]],
-                          c='lime', s=150, marker='D',
-                          edgecolors='darkgreen', linewidths=2,
-                          label='Najbolji susjed', zorder=8)
+            # Nacrtaj trenutno rješenje
+            if self.current_solution:
+                self.ax.scatter([self.current_solution[0]], [self.current_solution[1]],
+                              c='red', s=200, marker='o',
+                              edgecolors='darkred', linewidths=2.5,
+                              label='Trenutna tačka', zorder=9)
+
+                # Nacrtaj pravougaonik koji predstavlja okolinu
+                rect_size = self.delta * 2
+                rect = patches.Rectangle((self.current_solution[0] - self.delta,
+                                         self.current_solution[1] - self.delta),
+                                        rect_size, rect_size,
+                                        linewidth=2, edgecolor='orange',
+                                        facecolor='orange', alpha=0.1, linestyle='--')
+                self.ax.add_patch(rect)
+
+            # Nacrtaj SVE susjedne tačke
+            if self.current_neighbors:
+                neighbors_x = [n[0] for n in self.current_neighbors]
+                neighbors_y = [n[1] for n in self.current_neighbors]
+                self.ax.scatter(neighbors_x, neighbors_y,
+                              c='orange', s=100, marker='s',
+                              edgecolors='darkorange', linewidths=1.5,
+                              label='Okolina (8 tačaka)', zorder=7, alpha=0.7)
+
+            # Označi tabu tačke (ako koristimo tabu search)
+            if self.search_algorithm == 'Tabu pretraživanje' and self.tabu_list:
+                tabu_x = [t[0] for t in self.tabu_list]
+                tabu_y = [t[1] for t in self.tabu_list]
+                self.ax.scatter(tabu_x, tabu_y,
+                              c='red', s=80, marker='x',
+                              linewidths=2, label='Tabu lista', zorder=8)
+
+            # Najbolji susjed
+            if self.best_neighbor:
+                self.ax.scatter([self.best_neighbor[0]], [self.best_neighbor[1]],
+                              c='lime', s=150, marker='D',
+                              edgecolors='darkgreen', linewidths=2,
+                              label='Najbolji susjed', zorder=8)
 
         self.ax.legend(loc='upper right', fontsize=9)
         self.canvas.draw()
@@ -375,10 +478,9 @@ class TabuSearchDemo:
             if self.search_algorithm == 'Tabu pretraživanje':
                 info += f"Tabu lista ({len(self.tabu_list)}/{self.tabu_tenure}):\n"
                 if self.tabu_list:
-                    for i, t in enumerate(self.tabu_list[-5:]):  # Prikaži zadnjih 5
+                    # Prikaži sve elemente u tabu listi
+                    for i, t in enumerate(self.tabu_list):
                         info += f"  {i+1}. [{t[0]:.3f}, {t[1]:.3f}]\n"
-                    if len(self.tabu_list) > 5:
-                        info += f"  ... (još {len(self.tabu_list)-5})\n"
                 else:
                     info += "  (prazna)\n"
                 info += "\n"
@@ -471,6 +573,11 @@ class TabuSearchDemo:
             self.tabu_list = self.tabu_list[-self.tabu_tenure:]
 
         self.update_info_text()
+
+    def on_max_iter_changed(self, val):
+        """Promjena maksimalnog broja iteracija"""
+        self.max_iterations = int(float(val))
+        self.max_iter_label.config(text=f"Max iter = {self.max_iterations}")
 
     def on_click(self, event):
         """Postavi početnu tačku klikom miša"""
@@ -631,8 +738,8 @@ class TabuSearchDemo:
 
         # Tabu search ne zaustavlja se kod lokalnog minimuma
         # Ali možemo dodati uslov zaustavljanja nakon određenog broja iteracija
-        if self.iteration >= 50:
-            print("  → Dostignut maksimalan broj iteracija!")
+        if self.iteration >= self.max_iterations:
+            print(f"  → Dostignut maksimalan broj iteracija ({self.max_iterations})!")
             self.finished = True
         else:
             print(f"  → Pomak na tačku (može biti i gora!)")
@@ -647,17 +754,20 @@ class TabuSearchDemo:
             messagebox.showinfo("Info", "Pretraživanje je već završeno!")
             return
 
-        # Izvrši korake dok ne dođemo do završetka
-        max_iterations = 100 if self.search_algorithm == 'Lokalno pretraživanje' else 50
+        # Resetuj stop flag
+        self.stop_requested = False
 
-        for _ in range(max_iterations):
-            if self.finished:
-                break
+        # Izvrši korake dok ne dođemo do završetka ili dok ne bude zatraženo zaustavljanje
+        while not self.finished and not self.stop_requested:
             self.on_step()
             self.root.update()
-            self.root.after(300)  # Pauza od 300ms
+            self.root.after(100)  # Pauza od 100ms
 
-        if not self.finished:
+        if self.stop_requested:
+            print("Pretraživanje zaustavljeno od strane korisnika!")
+            messagebox.showinfo("Info", "Pretraživanje zaustavljeno!")
+            self.stop_requested = False
+        elif not self.finished:
             print("Dostignut maksimalan broj iteracija!")
             messagebox.showinfo("Info", "Dostignut maksimalan broj iteracija!")
 
@@ -670,11 +780,35 @@ class TabuSearchDemo:
         self.iteration = 0
         self.finished = False
         self.tabu_list = []
+        self.stop_requested = False
 
         self.draw_objective_function()
         self.update_info_text()
 
         print("\nAplikacija resetovana!")
+
+    def on_stop(self):
+        """Zaustavi pretraživanje"""
+        self.stop_requested = True
+        print("\nZaustavljanje pretraživanja zatraženo...")
+
+    def switch_to_2d(self):
+        """Prebaci na 2D contour prikaz"""
+        if self.view_mode != '2D':
+            self.view_mode = '2D'
+            self.draw_objective_function()
+            if self.current_solution:
+                self.update_plot()
+            print("\nPrebačeno na 2D (contour) prikaz")
+
+    def switch_to_3d(self):
+        """Prebaci na 3D mesh prikaz"""
+        if self.view_mode != '3D':
+            self.view_mode = '3D'
+            self.draw_objective_function()
+            if self.current_solution:
+                self.update_plot()
+            print("\nPrebačeno na 3D (mesh) prikaz")
 
     def show_click_instruction(self):
         """Prikaži instrukcije za klik"""
