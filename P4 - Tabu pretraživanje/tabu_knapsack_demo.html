@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabu Pretraživanje - Problem Ranca (Knapsack)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .controls-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            height: fit-content;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .control-group .value-display {
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .btn-disabled {
+            background: #cbd5e0;
+            color: #718096;
+            cursor: not-allowed;
+        }
+
+        .visualization-area {
+            background: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .current-solution {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .solution-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .binary-string {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .bit-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .bit {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .bit-0 {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .bit-1 {
+            background: #48bb78;
+            color: white;
+        }
+
+        .bit:hover {
+            transform: scale(1.1);
+        }
+
+        .tabu-counter {
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-top: 3px;
+            height: 20px;
+        }
+
+        .tabu-active {
+            color: #f56565;
+        }
+
+        .tabu-inactive {
+            color: #a0aec0;
+        }
+
+        .items-display {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 80px 80px 60px;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            align-items: center;
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-row.selected {
+            background: #c6f6d5;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .neighbourhood {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .neighbour-list {
+            display: grid;
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .neighbour-item {
+            display: grid;
+            grid-template-columns: 50px 200px 100px 100px 1fr;
+            gap: 15px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            align-items: center;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .neighbour-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .neighbour-best {
+            border-color: #fbbf24;
+            background: #fef3c7;
+        }
+
+        .neighbour-aspiration {
+            border-color: #10b981;
+            background: #d1fae5;
+        }
+
+        .neighbour-tabu {
+            opacity: 0.5;
+            background: #fee;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .badge-ok {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .badge-tabu {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .badge-best {
+            background: #fef3c7;
+            color: #78350f;
+        }
+
+        .badge-aspiration {
+            background: #d1fae5;
+            color: #064e3b;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        #convergenceChart {
+            width: 100%;
+            height: 300px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        .problem-description {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .problem-description h3 {
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .problem-description p {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 1em;
+        }
+
+        .footer-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .algorithm-selector {
+            background: #e6fffa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #38b2ac;
+        }
+
+        .algorithm-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #234e52;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .radio-option:hover {
+            background: #b2f5ea;
+        }
+
+        .radio-option input[type="radio"] {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎒 Tabu Pretraživanje - Problem Ranca</h1>
+        <div class="subtitle">Interaktivna demonstracija algoritma na praktičnom problemu</div>
+
+        <div class="problem-description">
+            <h3>Problem</h3>
+            <p>
+                Imamo 20 predmeta sa različitim težinama i vrijednostima. Cilj je maksimizirati ukupnu vrijednost 
+                predmeta u rancu, pri čemu ukupna težina ne smije preći kapacitet ranca.
+                Binarni string dužine 20 predstavlja izbor predmeta (1 = uzmi, 0 = ostavi).
+            </p>
+        </div>
+
+        <div class="main-layout">
+            <div class="controls-panel">
+                <h3 style="margin-bottom: 15px; color: #333;">⚙️ Kontrole</h3>
+                
+                <div class="algorithm-selector">
+                    <label>Tip Algoritma:</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="algorithm" value="tabu" checked>
+                            <span><strong>Tabu Pretraživanje</strong> - sa tabu listom</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="algorithm" value="local">
+                            <span><strong>Lokalno Pretraživanje</strong> - bez tabu liste</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group" id="tabuLengthControl">
+                    <label>Dužina Tabu Liste (M):</label>
+                    <input type="range" id="tabuLength" min="1" max="15" value="7" step="1">
+                    <div class="value-display" id="tabuLengthValue">7</div>
+                </div>
+
+                <div class="control-group">
+                    <label>Maksimalan Broj Iteracija:</label>
+                    <input type="range" id="maxIterations" min="10" max="500" value="100" step="10">
+                    <div class="value-display" id="maxIterationsValue">100</div>
+                </div>
+
+                <div class="control-group">
+                    <label>Brzina Animacije:</label>
+                    <input type="range" id="speed" min="100" max="2000" value="800" step="100">
+                    <div class="value-display" id="speedValue">800 ms</div>
+                </div>
+
+                <div class="control-group">
+                    <label>Kapacitet Ranca:</label>
+                    <input type="range" id="capacity" min="100" max="300" value="200" step="10">
+                    <div class="value-display" id="capacityValue">200 kg</div>
+                </div>
+
+                <button class="btn-primary" id="startBtn">▶️ Pokreni Pretraživanje</button>
+                <button class="btn-secondary" id="stepBtn">⏭️ Jedna Iteracija</button>
+                <button class="btn-danger" id="stopBtn">⏹️ Zaustavi</button>
+                <button class="btn-primary" id="resetBtn">🔄 Reset Problem</button>
+
+                <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px;">
+                    <h4 style="margin-bottom: 10px; color: #333;">📊 Statistika</h4>
+                    <div style="display: grid; gap: 8px; font-size: 0.9em;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Iteracija:</span>
+                            <strong id="iterationCount">0</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Tabu overrides:</span>
+                            <strong id="aspirationCount">0</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Blokirani potezi:</span>
+                            <strong id="blockedCount">0</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px; padding: 15px; background: #fff5f5; border-radius: 8px; border-left: 4px solid #f56565;" id="tabuInfo">
+                    <h4 style="margin-bottom: 10px; color: #c53030;">🚫 Tabu Lista</h4>
+                    <p style="font-size: 0.85em; color: #742a2a; line-height: 1.5;">
+                        Brojači pokazuju koliko iteracija svaki bit ne može biti promijenjen. 
+                        Vrijednost 0 = bit je slobodan za izmjenu.
+                    </p>
+                </div>
+                
+                <div style="margin-top: 15px; padding: 15px; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38b2ac; display: none;" id="localInfo">
+                    <h4 style="margin-bottom: 10px; color: #234e52;">🔍 Lokalno Pretraživanje</h4>
+                    <p style="font-size: 0.85em; color: #234e52; line-height: 1.5;">
+                        Jednostavno lokalno pretraživanje bira uvijek najbolje rješenje iz okoline. 
+                        Zaustavlja se kada dođe do lokalnog optimuma.
+                    </p>
+                </div>
+            </div>
+
+            <div class="visualization-area">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Trenutna Vrijednost</div>
+                        <div class="stat-value" id="currentValue">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Najbolja Vrijednost</div>
+                        <div class="stat-value" id="bestValue">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Težina / Kapacitet</div>
+                        <div class="stat-value" id="weightInfo">0/200</div>
+                    </div>
+                </div>
+
+                <div class="current-solution">
+                    <div class="solution-title">🎯 Trenutno Rješenje (Binarni String)</div>
+                    <div class="binary-string" id="binaryString"></div>
+                    <div class="solution-title" style="margin-top: 20px;">📦 Izabrani Predmeti</div>
+                    <div class="items-display" id="itemsDisplay"></div>
+                </div>
+
+                <div class="neighbourhood">
+                    <div class="solution-title">🔍 Okolina (Mogući Potezi - Flip Jedan Bit)</div>
+                    <div class="neighbour-list" id="neighbourList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3 style="margin-bottom: 15px; color: #333;">📈 Konvergencija Algoritma</h3>
+            <canvas id="convergenceChart"></canvas>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #667eea;"></div>
+                    <span>Trenutna vrijednost</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #48bb78;"></div>
+                    <span>Najbolja vrijednost</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f56565;"></div>
+                    <span>Validna rješenja</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-title">Optimizacija resursa</div>
+        <div>Red. prof. dr Samim Konjicija</div>
+        <div>2025. godina</div>
+    </div>
+
+    <script>
+        // Problem definition - Knapsack items
+        let items = [];
+        let capacity = 200;
+        let tabuLength = 7;
+        let animationSpeed = 800;
+        let maxIterations = 100;
+        let algorithmType = 'tabu'; // 'tabu' or 'local'
+        
+        // Algorithm state
+        let currentSolution = [];
+        let tabuList = [];
+        let bestSolution = [];
+        let bestValue = 0;
+        let iteration = 0;
+        let aspirationCount = 0;
+        let blockedCount = 0;
+        let running = false;
+        let animationInterval = null;
+        
+        // Chart data
+        let chartData = {
+            iterations: [],
+            currentValues: [],
+            bestValues: [],
+            validPoints: []
+        };
+        
+        // Initialize items with random weights and values
+        function initializeProblem() {
+            items = [];
+            for (let i = 0; i < 20; i++) {
+                const weight = Math.floor(Math.random() * 25) + 5; // 5-30 kg
+                const value = Math.floor(Math.random() * 50) + 10; // 10-60
+                items.push({
+                    id: i,
+                    name: `Predmet ${i + 1}`,
+                    weight: weight,
+                    value: value
+                });
+            }
+            
+            // Generate random initial solution
+            currentSolution = Array(20).fill(0).map(() => Math.random() > 0.7 ? 1 : 0);
+            
+            // Make sure initial solution is feasible
+            while (getTotalWeight(currentSolution) > capacity) {
+                const oneIndices = currentSolution.map((v, i) => v === 1 ? i : -1).filter(i => i >= 0);
+                if (oneIndices.length === 0) break;
+                const randomIndex = oneIndices[Math.floor(Math.random() * oneIndices.length)];
+                currentSolution[randomIndex] = 0;
+            }
+            
+            tabuList = Array(20).fill(0);
+            bestSolution = [...currentSolution];
+            bestValue = calculateValue(currentSolution);
+            iteration = 0;
+            aspirationCount = 0;
+            blockedCount = 0;
+            
+            chartData = {
+                iterations: [],
+                currentValues: [],
+                bestValues: [],
+                validPoints: []
+            };
+            
+            updateDisplay();
+            updateChart();
+        }
+        
+        function getTotalWeight(solution) {
+            return solution.reduce((sum, bit, i) => sum + (bit * items[i].weight), 0);
+        }
+        
+        function calculateValue(solution) {
+            const weight = getTotalWeight(solution);
+            if (weight > capacity) return 0; // Infeasible solution
+            return solution.reduce((sum, bit, i) => sum + (bit * items[i].value), 0);
+        }
+        
+        function getNeighbourhood() {
+            const neighbours = [];
+            
+            for (let i = 0; i < currentSolution.length; i++) {
+                const neighbour = [...currentSolution];
+                neighbour[i] = 1 - neighbour[i]; // Flip bit
+                
+                const value = calculateValue(neighbour);
+                const weight = getTotalWeight(neighbour);
+                const isTabu = algorithmType === 'tabu' && tabuList[i] > 0;
+                const isValid = weight <= capacity;
+                const isBest = value > bestValue; // Aspiration criterion
+                
+                neighbours.push({
+                    index: i,
+                    solution: neighbour,
+                    value: value,
+                    weight: weight,
+                    isTabu: isTabu,
+                    isValid: isValid,
+                    aspirationOverride: isTabu && isBest,
+                    tabuRemaining: tabuList[i]
+                });
+            }
+            
+            // Sort by value (descending)
+            neighbours.sort((a, b) => b.value - a.value);
+            
+            return neighbours;
+        }
+        
+        function selectNextSolution(neighbours) {
+            if (algorithmType === 'local') {
+                // Local search: take the best neighbour
+                const bestNeighbour = neighbours[0];
+                const currentValue = calculateValue(currentSolution);
+                
+                // Stop if no improvement (local optimum reached)
+                if (bestNeighbour.value <= currentValue) {
+                    return null; // Signal to stop
+                }
+                
+                return bestNeighbour;
+            } else {
+                // Tabu search
+                // Find valid (non-tabu or aspiration override) neighbours
+                const validNeighbours = neighbours.filter(n => 
+                    !n.isTabu || n.aspirationOverride
+                );
+                
+                if (validNeighbours.length === 0) {
+                    // All neighbours are tabu - this is rare but possible
+                    // Take the best tabu neighbour
+                    blockedCount++;
+                    return neighbours[0];
+                }
+                
+                // Take the best valid neighbour
+                const selected = validNeighbours[0];
+                
+                if (selected.aspirationOverride) {
+                    aspirationCount++;
+                }
+                
+                return selected;
+            }
+        }
+        
+        function performIteration() {
+            iteration++;
+            
+            // Check max iterations
+            if (iteration >= maxIterations) {
+                stopAnimation();
+                showSolutionDialog(`Dostignut maksimalan broj iteracija (${maxIterations})`);
+                return;
+            }
+            
+            // Decrement tabu counters (only for tabu search)
+            if (algorithmType === 'tabu') {
+                tabuList = tabuList.map(t => Math.max(0, t - 1));
+            }
+            
+            // Get neighbourhood
+            const neighbours = getNeighbourhood();
+            
+            // Select next solution
+            const selected = selectNextSolution(neighbours);
+            
+            // Check if local search reached local optimum
+            if (selected === null) {
+                stopAnimation();
+                showSolutionDialog(`Lokalno pretraživanje dostiglo lokalni optimum na iteraciji ${iteration}`);
+                return;
+            }
+            
+            // Update solution
+            currentSolution = [...selected.solution];
+            
+            // Set tabu for the flipped bit (only for tabu search)
+            if (algorithmType === 'tabu') {
+                tabuList[selected.index] = tabuLength;
+            }
+            
+            // Update best if better
+            const currentValue = calculateValue(currentSolution);
+            if (currentValue > bestValue) {
+                bestValue = currentValue;
+                bestSolution = [...currentSolution];
+            }
+            
+            // Update chart data
+            chartData.iterations.push(iteration);
+            chartData.currentValues.push(currentValue);
+            chartData.bestValues.push(bestValue);
+            chartData.validPoints.push(getTotalWeight(currentSolution) <= capacity ? currentValue : null);
+            
+            updateDisplay();
+            updateChart();
+        }
+        
+        function showSolutionDialog(message) {
+            const selectedItems = items.filter((item, i) => bestSolution[i] === 1);
+            const totalWeight = getTotalWeight(bestSolution);
+            const totalValue = bestValue;
+            
+            let itemsList = selectedItems.map(item => 
+                `  • ${item.name}: ${item.weight} kg, vrijednost ${item.value}`
+            ).join('\n');
+            
+            const dialogMessage = `${message}
+
+📊 NAJBOLJE PRONAĐENO RJEŠENJE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Ukupna vrijednost: ${totalValue}
+⚖️  Ukupna težina: ${totalWeight} / ${capacity} kg
+📦 Broj predmeta: ${selectedItems.length}
+
+Izabrani predmeti:
+${itemsList}
+
+Binarni string: [${bestSolution.join(', ')}]`;
+            
+            alert(dialogMessage);
+        }
+        
+        function updateDisplay() {
+            // Update stats
+            document.getElementById('currentValue').textContent = calculateValue(currentSolution);
+            document.getElementById('bestValue').textContent = bestValue;
+            document.getElementById('weightInfo').textContent = 
+                `${getTotalWeight(currentSolution)}/${capacity} kg`;
+            document.getElementById('iterationCount').textContent = iteration;
+            document.getElementById('aspirationCount').textContent = aspirationCount;
+            document.getElementById('blockedCount').textContent = blockedCount;
+            
+            // Update binary string with tabu counters
+            const binaryContainer = document.getElementById('binaryString');
+            binaryContainer.innerHTML = '';
+            currentSolution.forEach((bit, i) => {
+                const container = document.createElement('div');
+                container.className = 'bit-container';
+                
+                const bitDiv = document.createElement('div');
+                bitDiv.className = `bit bit-${bit}`;
+                bitDiv.textContent = bit;
+                bitDiv.title = `Bit ${i}: ${items[i].name}`;
+                
+                const counter = document.createElement('div');
+                counter.className = `tabu-counter ${tabuList[i] > 0 ? 'tabu-active' : 'tabu-inactive'}`;
+                
+                if (algorithmType === 'tabu') {
+                    counter.textContent = tabuList[i] > 0 ? `🚫${tabuList[i]}` : '✓';
+                } else {
+                    counter.textContent = ''; // No tabu counters for local search
+                }
+                
+                container.appendChild(bitDiv);
+                container.appendChild(counter);
+                binaryContainer.appendChild(container);
+            });
+            
+            // Update items display
+            const itemsContainer = document.getElementById('itemsDisplay');
+            itemsContainer.innerHTML = `
+                <div class="item-row" style="font-weight: bold; background: #edf2f7;">
+                    <div>Status</div>
+                    <div>Naziv</div>
+                    <div>Težina</div>
+                    <div>Vrijednost</div>
+                    <div>V/W</div>
+                </div>
+            `;
+            
+            items.forEach((item, i) => {
+                const row = document.createElement('div');
+                row.className = `item-row ${currentSolution[i] === 1 ? 'selected' : ''}`;
+                row.innerHTML = `
+                    <div style="text-align: center; font-size: 1.5em;">
+                        ${currentSolution[i] === 1 ? '✅' : '⬜'}
+                    </div>
+                    <div class="item-name">${item.name}</div>
+                    <div>${item.weight} kg</div>
+                    <div>${item.value}</div>
+                    <div>${(item.value / item.weight).toFixed(2)}</div>
+                `;
+                itemsContainer.appendChild(row);
+            });
+            
+            // Update neighbourhood
+            const neighbours = getNeighbourhood();
+            const neighbourContainer = document.getElementById('neighbourList');
+            neighbourContainer.innerHTML = '';
+            
+            neighbours.slice(0, 10).forEach((n, idx) => {
+                let statusClass = 'badge-ok';
+                let statusText = '✅ OK';
+                let itemClass = '';
+                
+                if (n.aspirationOverride) {
+                    statusClass = 'badge-aspiration';
+                    statusText = '🏆 ASPIRATION';
+                    itemClass = 'neighbour-aspiration';
+                } else if (n.isTabu) {
+                    statusClass = 'badge-tabu';
+                    statusText = `🚫 Tabu (${n.tabuRemaining})`;
+                    itemClass = 'neighbour-tabu';
+                }
+                
+                if (idx === 0 && !n.isTabu) {
+                    itemClass = 'neighbour-best';
+                    statusText = '⭐ ' + statusText;
+                }
+                
+                const item = document.createElement('div');
+                item.className = `neighbour-item ${itemClass}`;
+                item.innerHTML = `
+                    <div style="text-align: center; font-weight: bold;">Bit ${n.index}</div>
+                    <div style="font-size: 0.9em; color: #4a5568;">${items[n.index].name}</div>
+                    <div>
+                        <div style="font-size: 0.8em; color: #718096;">Vrijednost</div>
+                        <div style="font-weight: bold; color: ${n.value > 0 ? '#48bb78' : '#f56565'};">${n.value}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8em; color: #718096;">Težina</div>
+                        <div style="font-weight: bold; color: ${n.weight <= capacity ? '#48bb78' : '#f56565'};">${n.weight} kg</div>
+                    </div>
+                    <div class="status-badge ${statusClass}">${statusText}</div>
+                `;
+                neighbourContainer.appendChild(item);
+            });
+        }
+        
+        // Chart implementation
+        let chartCanvas, chartCtx;
+        
+        function initChart() {
+            chartCanvas = document.getElementById('convergenceChart');
+            chartCtx = chartCanvas.getContext('2d');
+            
+            // Set canvas size
+            chartCanvas.width = chartCanvas.offsetWidth;
+            chartCanvas.height = 300;
+        }
+        
+        function updateChart() {
+            if (!chartCtx) return;
+            
+            const width = chartCanvas.width;
+            const height = chartCanvas.height;
+            const padding = 40;
+            const plotWidth = width - 2 * padding;
+            const plotHeight = height - 2 * padding;
+            
+            // Clear canvas
+            chartCtx.clearRect(0, 0, width, height);
+            
+            if (chartData.iterations.length === 0) return;
+            
+            // Find max values
+            const maxIter = Math.max(...chartData.iterations, 10);
+            const maxValue = Math.max(...chartData.bestValues, ...chartData.currentValues, 100);
+            
+            // Draw axes
+            chartCtx.strokeStyle = '#cbd5e0';
+            chartCtx.lineWidth = 2;
+            chartCtx.beginPath();
+            chartCtx.moveTo(padding, padding);
+            chartCtx.lineTo(padding, height - padding);
+            chartCtx.lineTo(width - padding, height - padding);
+            chartCtx.stroke();
+            
+            // Draw grid
+            chartCtx.strokeStyle = '#e2e8f0';
+            chartCtx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (plotHeight * i / 5);
+                chartCtx.beginPath();
+                chartCtx.moveTo(padding, y);
+                chartCtx.lineTo(width - padding, y);
+                chartCtx.stroke();
+                
+                // Y-axis labels
+                chartCtx.fillStyle = '#4a5568';
+                chartCtx.font = '12px sans-serif';
+                chartCtx.textAlign = 'right';
+                chartCtx.fillText(
+                    Math.round(maxValue * (5 - i) / 5),
+                    padding - 10,
+                    y + 4
+                );
+            }
+            
+            // Helper function to convert data to canvas coordinates
+            function toX(iter) {
+                return padding + (iter / maxIter) * plotWidth;
+            }
+            
+            function toY(value) {
+                return height - padding - (value / maxValue) * plotHeight;
+            }
+            
+            // Draw current value line
+            chartCtx.strokeStyle = '#667eea';
+            chartCtx.lineWidth = 2;
+            chartCtx.beginPath();
+            chartData.iterations.forEach((iter, i) => {
+                const x = toX(iter);
+                const y = toY(chartData.currentValues[i]);
+                if (i === 0) chartCtx.moveTo(x, y);
+                else chartCtx.lineTo(x, y);
+            });
+            chartCtx.stroke();
+            
+            // Draw best value line
+            chartCtx.strokeStyle = '#48bb78';
+            chartCtx.lineWidth = 3;
+            chartCtx.beginPath();
+            chartData.iterations.forEach((iter, i) => {
+                const x = toX(iter);
+                const y = toY(chartData.bestValues[i]);
+                if (i === 0) chartCtx.moveTo(x, y);
+                else chartCtx.lineTo(x, y);
+            });
+            chartCtx.stroke();
+            
+            // Draw valid points
+            chartCtx.fillStyle = '#48bb78';
+            chartData.iterations.forEach((iter, i) => {
+                if (chartData.validPoints[i] !== null) {
+                    const x = toX(iter);
+                    const y = toY(chartData.validPoints[i]);
+                    chartCtx.beginPath();
+                    chartCtx.arc(x, y, 3, 0, 2 * Math.PI);
+                    chartCtx.fill();
+                }
+            });
+            
+            // Draw invalid points
+            chartCtx.fillStyle = '#f56565';
+            chartData.iterations.forEach((iter, i) => {
+                if (chartData.validPoints[i] === null && chartData.currentValues[i] === 0) {
+                    const x = toX(iter);
+                    const y = height - padding;
+                    chartCtx.beginPath();
+                    chartCtx.arc(x, y, 3, 0, 2 * Math.PI);
+                    chartCtx.fill();
+                }
+            });
+            
+            // Draw labels
+            chartCtx.fillStyle = '#2d3748';
+            chartCtx.font = '14px sans-serif';
+            chartCtx.textAlign = 'center';
+            chartCtx.fillText('Iteracija', width / 2, height - 5);
+            
+            chartCtx.save();
+            chartCtx.translate(15, height / 2);
+            chartCtx.rotate(-Math.PI / 2);
+            chartCtx.fillText('Vrijednost', 0, 0);
+            chartCtx.restore();
+        }
+        
+        // Event listeners
+        document.querySelectorAll('input[name="algorithm"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                algorithmType = e.target.value;
+                
+                // Show/hide tabu length control and info boxes
+                const tabuControl = document.getElementById('tabuLengthControl');
+                const tabuInfo = document.getElementById('tabuInfo');
+                const localInfo = document.getElementById('localInfo');
+                
+                if (algorithmType === 'tabu') {
+                    tabuControl.style.display = 'block';
+                    tabuInfo.style.display = 'block';
+                    localInfo.style.display = 'none';
+                } else {
+                    tabuControl.style.display = 'none';
+                    tabuInfo.style.display = 'none';
+                    localInfo.style.display = 'block';
+                }
+                
+                // Reset when switching algorithms
+                if (!running) {
+                    initializeProblem();
+                }
+            });
+        });
+        
+        document.getElementById('tabuLength').addEventListener('input', (e) => {
+            tabuLength = parseInt(e.target.value);
+            document.getElementById('tabuLengthValue').textContent = tabuLength;
+        });
+        
+        document.getElementById('maxIterations').addEventListener('input', (e) => {
+            maxIterations = parseInt(e.target.value);
+            document.getElementById('maxIterationsValue').textContent = maxIterations;
+        });
+        
+        document.getElementById('speed').addEventListener('input', (e) => {
+            animationSpeed = parseInt(e.target.value);
+            document.getElementById('speedValue').textContent = animationSpeed + ' ms';
+            if (running) {
+                stopAnimation();
+                startAnimation();
+            }
+        });
+        
+        document.getElementById('capacity').addEventListener('input', (e) => {
+            capacity = parseInt(e.target.value);
+            document.getElementById('capacityValue').textContent = capacity + ' kg';
+            bestValue = calculateValue(bestSolution);
+            updateDisplay();
+        });
+        
+        document.getElementById('startBtn').addEventListener('click', () => {
+            if (!running) {
+                startAnimation();
+            }
+        });
+        
+        document.getElementById('stepBtn').addEventListener('click', () => {
+            if (!running) {
+                performIteration();
+            }
+        });
+        
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            if (running) {
+                stopAnimation();
+                showSolutionDialog(`Pretraživanje zaustavljeno od strane korisnika na iteraciji ${iteration}`);
+            }
+        });
+        
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            stopAnimation();
+            initializeProblem();
+        });
+        
+        function startAnimation() {
+            running = true;
+            document.getElementById('startBtn').textContent = '⏸️ Pauziraj';
+            document.getElementById('startBtn').classList.add('btn-disabled');
+            animationInterval = setInterval(() => {
+                performIteration();
+            }, animationSpeed);
+        }
+        
+        function stopAnimation() {
+            running = false;
+            document.getElementById('startBtn').textContent = '▶️ Pokreni Pretraživanje';
+            document.getElementById('startBtn').classList.remove('btn-disabled');
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+        
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initChart();
+            initializeProblem();
+        });
+        
+        // Handle window resize for chart
+        window.addEventListener('resize', () => {
+            if (chartCanvas) {
+                chartCanvas.width = chartCanvas.offsetWidth;
+                updateChart();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabu pretraživanje - Demo aplikacija</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .canvas-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            min-height: 0;
+        }
+
+        #chartCanvas {
+            flex: 1;
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            cursor: crosshair;
+        }
+
+        .chart-wrapper {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+        }
+
+        .controls-panel {
+            width: 380px;
+            padding: 20px;
+            background: white;
+            overflow-y: auto;
+            border-left: 2px solid #e0e0e0;
+        }
+
+        .control-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .control-section h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 16px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .radio-group label {
+            display: block;
+            margin: 8px 0;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        .radio-group label:hover {
+            background: #e8eaf6;
+        }
+
+        .radio-group input[type="radio"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .slider-group {
+            margin: 15px 0;
+        }
+
+        .slider-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .slider-group input[type="range"] {
+            width: 100%;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+
+        .slider-value {
+            text-align: center;
+            font-weight: bold;
+            color: #667eea;
+            padding: 5px;
+            background: white;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(250, 112, 154, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .info-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+        }
+
+        .info-section h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .info-row {
+            margin: 5px 0;
+        }
+
+        .info-highlight {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #ffc107;
+        }
+
+        .pseudocode {
+            background: #e8f5e9;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 15px;
+            white-space: pre-line;
+            border-left: 4px solid #4caf50;
+        }
+
+        .tabu-list {
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            max-height: 150px;
+            overflow-y: auto;
+            border-left: 4px solid #f44336;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .view-toggle button {
+            flex: 1;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .controls-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 2px solid #e0e0e0;
+            }
+        }
+
+        .help-menu {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .help-btn {
+            background: white;
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 15px 30px;
+            font-size: 14px;
+            margin-top: auto;
+        }
+
+        .footer p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Tabu pretraživanje - Demo aplikacija</h1>
+            <p>Optimizacija resursa | Red. prof. dr Samim Konjicija | Novembar 2025.</p>
+        </div>
+
+        <div class="main-content">
+            <div class="canvas-container">
+                <div class="view-toggle">
+                    <button class="btn-primary" onclick="app.switchView('2d')">📊 2D Prikaz</button>
+                    <button class="btn-primary" onclick="app.switchView('3d')">📈 3D Prikaz</button>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: green;"></div>
+                        <span>Globalni minimum</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: red;"></div>
+                        <span>Trenutna tačka</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: orange;"></div>
+                        <span>Okolina</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: lime;"></div>
+                        <span>Najbolji susjed</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: gold;"></div>
+                        <span>★ Najbolja otkrivena</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: purple;"></div>
+                        <span>Putanja</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: red; border-radius: 0;"></div>
+                        <span>Tabu lista</span>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="chartCanvas"></canvas>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <div class="control-section">
+                    <h3>🎯 Algoritam</h3>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="algorithm" value="local" checked onchange="app.onAlgorithmChange()">
+                            Lokalno pretraživanje
+                        </label>
+                        <label>
+                            <input type="radio" name="algorithm" value="tabu" onchange="app.onAlgorithmChange()">
+                            Tabu pretraživanje
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>📊 Funkcija</h3>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="function" value="quadratic" checked onchange="app.onFunctionChange()">
+                            Kvadratna
+                        </label>
+                        <label>
+                            <input type="radio" name="function" value="rastrigin" onchange="app.onFunctionChange()">
+                            Rastrigin
+                        </label>
+                        <label>
+                            <input type="radio" name="function" value="ackley" onchange="app.onFunctionChange()">
+                            Ackley
+                        </label>
+                        <label>
+                            <input type="radio" name="function" value="griewank" onchange="app.onFunctionChange()">
+                            Griewank
+                        </label>
+                        <label>
+                            <input type="radio" name="function" value="levy" onchange="app.onFunctionChange()">
+                            Levy
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>⚙️ Parametri</h3>
+                    <div class="slider-group">
+                        <label>Delta (veličina koraka):</label>
+                        <input type="range" id="deltaSlider" min="0.1" max="2.0" step="0.1" value="0.5" oninput="app.onDeltaChange(this.value)">
+                        <div class="slider-value" id="deltaValue">Δ = 0.5</div>
+                    </div>
+                    <div class="slider-group">
+                        <label>Dužina tabu liste:</label>
+                        <input type="range" id="tabuSlider" min="3" max="20" step="1" value="7" oninput="app.onTabuChange(this.value)">
+                        <div class="slider-value" id="tabuValue">Tabu lista = 7</div>
+                    </div>
+                    <div class="slider-group">
+                        <label>Maks. broj iteracija:</label>
+                        <input type="range" id="maxIterSlider" min="100" max="10000" step="100" value="5000" oninput="app.onMaxIterChange(this.value)">
+                        <div class="slider-value" id="maxIterValue">Max iter = 5000</div>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>🎮 Akcije</h3>
+                    <div class="button-group">
+                        <button class="btn-primary" onclick="app.showClickInstruction()">👆 Klik za start</button>
+                        <button class="btn-primary" onclick="app.randomStart()">🎲 Slučajan start</button>
+                        <button class="btn-success" onclick="app.step()">▶️ Jedan korak</button>
+                        <button class="btn-secondary" onclick="app.runToCompletion()">⏩ Do kraja</button>
+                        <button class="btn-danger" onclick="app.stop()">⏹️ Zaustavi</button>
+                        <button class="btn-warning" onclick="app.reset()">🔄 Reset</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>ℹ️ Status</h3>
+                    <div class="info-section" id="infoDisplay">
+                        <p>Kliknite na grafik ili odaberite 'Slučajan start' da počnete.</p>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <button class="btn-primary" onclick="app.showHelp()">❓ Pomoć</button>
+                    <button class="btn-primary" onclick="app.showAbout()" style="margin-top: 8px;">📖 O aplikaciji</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Optimizacija resursa | Red. prof. dr Samim Konjicija | 2025. godina</p>
+        </div>
+    </div>
+
+    <!-- Modal za pomoć i o aplikaciji -->
+    <div id="helpModal" class="modal" onclick="app.closeModal(event)">
+        <div class="modal-content">
+            <span class="modal-close" onclick="app.closeModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // DEFINICIJE TEST FUNKCIJA
+        // ============================================================================
+
+        const FUNCTIONS = {
+            quadratic: {
+                name: 'Kvadratna',
+                func: (x) => x[0]**2 + x[1]**2,
+                range: [-5, 5],
+                globalMin: [0, 0]
+            },
+            rastrigin: {
+                name: 'Rastrigin',
+                func: (x) => {
+                    const A = 10;
+                    const n = x.length;
+                    return A * n + x.reduce((sum, xi) => sum + (xi**2 - A * Math.cos(2 * Math.PI * xi)), 0);
+                },
+                range: [-5, 5],
+                globalMin: [0, 0]
+            },
+            ackley: {
+                name: 'Ackley',
+                func: (x) => {
+                    const a = 20, b = 0.2, c = 2 * Math.PI;
+                    const n = x.length;
+                    const sum1 = x.reduce((sum, xi) => sum + xi**2, 0);
+                    const sum2 = x.reduce((sum, xi) => sum + Math.cos(c * xi), 0);
+                    return -a * Math.exp(-b * Math.sqrt(sum1/n)) - Math.exp(sum2/n) + a + Math.E;
+                },
+                range: [-5, 5],
+                globalMin: [0, 0]
+            },
+            griewank: {
+                name: 'Griewank',
+                func: (x) => {
+                    const sumPart = x.reduce((sum, xi) => sum + xi**2, 0) / 4000;
+                    const prodPart = x.reduce((prod, xi, i) => prod * Math.cos(xi / Math.sqrt(i + 1)), 1);
+                    return sumPart - prodPart + 1;
+                },
+                range: [-5, 5],
+                globalMin: [0, 0]
+            },
+            levy: {
+                name: 'Levy',
+                func: (x) => {
+                    const w = x.map(xi => 1 + (xi - 1) / 4);
+                    const term1 = Math.sin(Math.PI * w[0])**2;
+                    const term2 = w.slice(0, -1).reduce((sum, wi) =>
+                        sum + (wi - 1)**2 * (1 + 10 * Math.sin(Math.PI * wi + 1)**2), 0);
+                    const term3 = (w[w.length - 1] - 1)**2 * (1 + Math.sin(2 * Math.PI * w[w.length - 1])**2);
+                    return term1 + term2 + term3;
+                },
+                range: [-5, 5],
+                globalMin: [1, 1]
+            }
+        };
+
+        // ============================================================================
+        // GLAVNA APLIKACIJA
+        // ============================================================================
+
+        class TabuSearchApp {
+            constructor() {
+                this.canvas = document.getElementById('chartCanvas');
+                this.ctx = this.canvas.getContext('2d');
+
+                // Parametri
+                this.selectedFunction = 'quadratic';
+                this.algorithm = 'local';
+                this.delta = 0.5;
+                this.tabuTenure = 7;
+                this.maxIterations = 5000;
+                this.viewMode = '2d';
+
+                // Stanje algoritma
+                this.currentSolution = null;
+                this.history = [];
+                this.currentNeighbors = [];
+                this.bestNeighbor = null;
+                this.iteration = 0;
+                this.finished = false;
+                this.tabuList = [];
+                this.stopRequested = false;
+                this.bestFoundSolution = null;
+                this.bestFoundValue = Infinity;
+                this.isRunning = false;
+
+                // Setup canvas
+                this.setupCanvas();
+                this.updateDisplay();
+
+                console.log('Tabu pretraživanje - Demo aplikacija pokrenuta!');
+            }
+
+            setupCanvas() {
+                // Dobavi roditelj element (chart-wrapper)
+                const wrapper = this.canvas.parentElement;
+
+                // Postavi canvas dimenzije na osnovu roditelja
+                this.canvas.width = wrapper.clientWidth;
+                this.canvas.height = wrapper.clientHeight;
+
+                console.log(`Canvas dimensions: ${this.canvas.width} x ${this.canvas.height}`);
+
+                // Klik event
+                this.canvas.addEventListener('click', (e) => this.onCanvasClick(e));
+
+                this.drawObjectiveFunction();
+            }
+
+            getFunction() {
+                return FUNCTIONS[this.selectedFunction];
+            }
+
+            generateNeighborhood(x, delta) {
+                const directions = [
+                    [delta, 0],      // desno
+                    [-delta, 0],     // lijevo
+                    [0, delta],      // gore
+                    [0, -delta],     // dole
+                    [delta, delta],  // desno-gore
+                    [-delta, delta], // lijevo-gore
+                    [delta, -delta], // desno-dole
+                    [-delta, -delta] // lijevo-dole
+                ];
+
+                const func = this.getFunction();
+                return directions.map(d => {
+                    const newX = [
+                        Math.max(func.range[0], Math.min(func.range[1], x[0] + d[0])),
+                        Math.max(func.range[0], Math.min(func.range[1], x[1] + d[1]))
+                    ];
+                    return newX;
+                });
+            }
+
+            pointsEqual(p1, p2, tolerance = 0.01) {
+                return Math.abs(p1[0] - p2[0]) < tolerance && Math.abs(p1[1] - p2[1]) < tolerance;
+            }
+
+            drawObjectiveFunction() {
+                const func = this.getFunction();
+                const range = func.range;
+                const gridSize = 100; // Povećan za bolju rezoluciju
+                const step = (range[1] - range[0]) / gridSize;
+
+                // Clear canvas
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Bijela pozadina
+                this.ctx.fillStyle = 'white';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Maping koordinata
+                const mapX = (x) => ((x - range[0]) / (range[1] - range[0])) * this.canvas.width;
+                const mapY = (y) => this.canvas.height - ((y - range[0]) / (range[1] - range[0])) * this.canvas.height;
+
+                // Kreiraj matricu vrijednosti
+                const zMatrix = [];
+                let minZ = Infinity, maxZ = -Infinity;
+
+                for (let i = 0; i <= gridSize; i++) {
+                    zMatrix[i] = [];
+                    for (let j = 0; j <= gridSize; j++) {
+                        const x = range[0] + i * step;
+                        const y = range[0] + j * step;
+                        const z = func.func([x, y]);
+                        zMatrix[i][j] = z;
+                        minZ = Math.min(minZ, z);
+                        maxZ = Math.max(maxZ, z);
+                    }
+                }
+
+                // Nacrtaj contour sa bojama (filled contours)
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const x = range[0] + i * step;
+                        const y = range[0] + j * step;
+                        const z = zMatrix[i][j];
+
+                        const normalized = (z - minZ) / (maxZ - minZ);
+
+                        // Viridis-like color scheme - od plave preko zelene do žute
+                        let r, g, b;
+                        if (normalized < 0.25) {
+                            const t = normalized / 0.25;
+                            r = Math.floor(68 * (1 - t) + 59 * t);
+                            g = Math.floor(1 * (1 - t) + 82 * t);
+                            b = Math.floor(84 * (1 - t) + 139 * t);
+                        } else if (normalized < 0.5) {
+                            const t = (normalized - 0.25) / 0.25;
+                            r = Math.floor(59 * (1 - t) + 33 * t);
+                            g = Math.floor(82 * (1 - t) + 145 * t);
+                            b = Math.floor(139 * (1 - t) + 140 * t);
+                        } else if (normalized < 0.75) {
+                            const t = (normalized - 0.5) / 0.25;
+                            r = Math.floor(33 * (1 - t) + 94 * t);
+                            g = Math.floor(145 * (1 - t) + 201 * t);
+                            b = Math.floor(140 * (1 - t) + 98 * t);
+                        } else {
+                            const t = (normalized - 0.75) / 0.25;
+                            r = Math.floor(94 * (1 - t) + 253 * t);
+                            g = Math.floor(201 * (1 - t) + 231 * t);
+                            b = Math.floor(98 * (1 - t) + 37 * t);
+                        }
+
+                        this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.7)`;
+                        this.ctx.fillRect(
+                            mapX(x),
+                            mapY(y + step),
+                            Math.abs(mapX(x + step) - mapX(x)) + 1,
+                            Math.abs(mapY(y) - mapY(y + step)) + 1
+                        );
+                    }
+                }
+
+                // Nacrtaj konturne linije
+                const numContours = 15;
+                for (let level = 0; level < numContours; level++) {
+                    const contourValue = minZ + (maxZ - minZ) * (level + 1) / (numContours + 1);
+                    this.drawContourLine(zMatrix, gridSize, range, step, contourValue, mapX, mapY);
+                }
+
+                // Nacrtaj grid linije (koordinatni sistem)
+                this.ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+                this.ctx.lineWidth = 1;
+                for (let i = 0; i <= 10; i++) {
+                    const val = range[0] + i * (range[1] - range[0]) / 10;
+                    const pos = mapX(val);
+
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(pos, 0);
+                    this.ctx.lineTo(pos, this.canvas.height);
+                    this.ctx.stroke();
+
+                    // Oznake na x osi
+                    this.ctx.fillStyle = 'black';
+                    this.ctx.font = '11px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(val.toFixed(1), pos, this.canvas.height - 5);
+                }
+
+                for (let i = 0; i <= 10; i++) {
+                    const val = range[0] + i * (range[1] - range[0]) / 10;
+                    const pos = mapY(val);
+
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, pos);
+                    this.ctx.lineTo(this.canvas.width, pos);
+                    this.ctx.stroke();
+
+                    // Oznake na y osi
+                    this.ctx.fillStyle = 'black';
+                    this.ctx.font = '11px Arial';
+                    this.ctx.textAlign = 'left';
+                    this.ctx.fillText(val.toFixed(1), 5, pos - 2);
+                }
+
+                // Označi globalni minimum
+                const gmin = func.globalMin;
+                this.drawPoint(mapX(gmin[0]), mapY(gmin[1]), 'green', 15, '★');
+
+                // Nacrtaj stanje algoritma
+                this.drawAlgorithmState(mapX, mapY);
+            }
+
+            drawContourLine(zMatrix, gridSize, range, step, contourValue, mapX, mapY) {
+                // Jednostavna marching squares implementacija
+                this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+                this.ctx.lineWidth = 1.5;
+                this.ctx.beginPath();
+
+                for (let i = 0; i < gridSize - 1; i++) {
+                    for (let j = 0; j < gridSize - 1; j++) {
+                        const x0 = range[0] + i * step;
+                        const y0 = range[0] + j * step;
+
+                        const z00 = zMatrix[i][j];
+                        const z10 = zMatrix[i + 1][j];
+                        const z01 = zMatrix[i][j + 1];
+                        const z11 = zMatrix[i + 1][j + 1];
+
+                        // Provjeri da li kontura prolazi kroz ovaj kvadrat
+                        const below00 = z00 < contourValue;
+                        const below10 = z10 < contourValue;
+                        const below01 = z01 < contourValue;
+                        const below11 = z11 < contourValue;
+
+                        // Jednostavna linearna interpolacija za konturne linije
+                        if (below00 !== below10) {
+                            const t = (contourValue - z00) / (z10 - z00);
+                            const x = x0 + t * step;
+                            const y = y0;
+                            this.ctx.moveTo(mapX(x), mapY(y));
+                        }
+                        if (below00 !== below01) {
+                            const t = (contourValue - z00) / (z01 - z00);
+                            const x = x0;
+                            const y = y0 + t * step;
+                            if (this.ctx.lineTo) this.ctx.lineTo(mapX(x), mapY(y));
+                        }
+                        if (below10 !== below11) {
+                            const t = (contourValue - z10) / (z11 - z10);
+                            const x = x0 + step;
+                            const y = y0 + t * step;
+                            if (this.ctx.lineTo) this.ctx.lineTo(mapX(x), mapY(y));
+                        }
+                        if (below01 !== below11) {
+                            const t = (contourValue - z01) / (z11 - z01);
+                            const x = x0 + t * step;
+                            const y = y0 + step;
+                            if (this.ctx.lineTo) this.ctx.lineTo(mapX(x), mapY(y));
+                        }
+                    }
+                }
+                this.ctx.stroke();
+            }
+
+            drawAlgorithmState(mapX, mapY) {
+                if (!this.currentSolution) return;
+
+                // Nacrtaj historiju (putanju)
+                if (this.history.length > 1) {
+                    this.ctx.strokeStyle = 'purple';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([]);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(mapX(this.history[0][0]), mapY(this.history[0][1]));
+                    for (let i = 1; i < this.history.length; i++) {
+                        this.ctx.lineTo(mapX(this.history[i][0]), mapY(this.history[i][1]));
+                    }
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+
+                    // Nacrtaj tačke na putanji
+                    this.ctx.fillStyle = 'purple';
+                    for (const point of this.history) {
+                        this.ctx.beginPath();
+                        this.ctx.arc(mapX(point[0]), mapY(point[1]), 4, 0, 2 * Math.PI);
+                        this.ctx.fill();
+                    }
+                }
+
+                // Nacrtaj okolinu (pravougaonik)
+                if (this.currentSolution) {
+                    this.ctx.strokeStyle = 'orange';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([5, 5]);
+                    const rectSize = this.delta * 2;
+                    const x1 = this.currentSolution[0] - this.delta;
+                    const y1 = this.currentSolution[1] - this.delta;
+                    this.ctx.strokeRect(
+                        mapX(x1),
+                        mapY(y1 + rectSize),
+                        mapX(x1 + rectSize) - mapX(x1),
+                        mapY(y1) - mapY(y1 + rectSize)
+                    );
+                    this.ctx.setLineDash([]);
+                }
+
+                // Nacrtaj susjedne tačke
+                for (const neighbor of this.currentNeighbors) {
+                    this.drawPoint(mapX(neighbor[0]), mapY(neighbor[1]), 'orange', 8, '■');
+                }
+
+                // Nacrtaj tabu listu
+                if (this.algorithm === 'tabu') {
+                    for (const tabu of this.tabuList) {
+                        this.drawPoint(mapX(tabu[0]), mapY(tabu[1]), 'red', 10, '✕');
+                    }
+                }
+
+                // Nacrtaj najboljeg susjeda
+                if (this.bestNeighbor) {
+                    this.drawPoint(mapX(this.bestNeighbor[0]), mapY(this.bestNeighbor[1]), 'lime', 12, '◆');
+                }
+
+                // Nacrtaj najbolju otkrivenu tačku
+                if (this.bestFoundSolution) {
+                    this.drawPoint(mapX(this.bestFoundSolution[0]), mapY(this.bestFoundSolution[1]), 'gold', 18, '★');
+                }
+
+                // Nacrtaj trenutnu tačku
+                this.drawPoint(mapX(this.currentSolution[0]), mapY(this.currentSolution[1]), 'red', 12, '●');
+            }
+
+            drawPoint(x, y, color, size, symbol) {
+                this.ctx.fillStyle = color;
+                this.ctx.strokeStyle = 'black';
+                this.ctx.lineWidth = 2;
+
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, size, 0, 2 * Math.PI);
+                this.ctx.fill();
+                this.ctx.stroke();
+
+                // Symbol
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = `bold ${size * 1.2}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText(symbol, x, y);
+            }
+
+            updateDisplay() {
+                this.drawObjectiveFunction();
+                this.updateInfoDisplay();
+            }
+
+            updateInfoDisplay() {
+                const info = document.getElementById('infoDisplay');
+                const func = this.getFunction();
+
+                if (!this.currentSolution) {
+                    info.innerHTML = '<p>Kliknite na grafik ili odaberite \'Slučajan start\' da počnete.</p>';
+                    return;
+                }
+
+                const fCurrent = func.func(this.currentSolution);
+                const dist = Math.sqrt(
+                    (this.currentSolution[0] - func.globalMin[0])**2 +
+                    (this.currentSolution[1] - func.globalMin[1])**2
+                );
+
+                let html = `
+                    <div style="border-bottom: 2px solid #667eea; padding-bottom: 10px; margin-bottom: 10px;">
+                        <strong style="color: #667eea;">ALGORITAM: ${this.algorithm === 'local' ? 'Lokalno pretraživanje' : 'Tabu pretraživanje'}</strong>
+                    </div>
+
+                    <div class="info-row"><strong>Iteracija:</strong> ${this.iteration}</div>
+                    <div class="info-row"><strong>Funkcija:</strong> ${func.name}</div>
+
+                    <div style="margin-top: 15px;">
+                        <strong>Trenutna tačka:</strong><br>
+                        &nbsp;&nbsp;x = [${this.currentSolution[0].toFixed(4)}, ${this.currentSolution[1].toFixed(4)}]<br>
+                        &nbsp;&nbsp;f(x) = ${fCurrent.toFixed(6)}
+                    </div>
+                `;
+
+                if (this.bestFoundSolution) {
+                    html += `
+                        <div class="info-highlight">
+                            <strong>★ NAJBOLJA OTKRIVENA:</strong><br>
+                            &nbsp;&nbsp;x = [${this.bestFoundSolution[0].toFixed(4)}, ${this.bestFoundSolution[1].toFixed(4)}]<br>
+                            &nbsp;&nbsp;f(x) = ${this.bestFoundValue.toFixed(6)}
+                        </div>
+                    `;
+                }
+
+                html += `<div class="info-row"><strong>Udaljenost od globalnog:</strong> ${dist.toFixed(4)}</div>`;
+
+                if (this.algorithm === 'tabu' && this.tabuList.length > 0) {
+                    html += `
+                        <div class="tabu-list">
+                            <strong>Tabu lista (${this.tabuList.length}/${this.tabuTenure}):</strong><br>
+                    `;
+                    this.tabuList.forEach((t, i) => {
+                        html += `&nbsp;&nbsp;${i+1}. [${t[0].toFixed(3)}, ${t[1].toFixed(3)}]<br>`;
+                    });
+                    html += '</div>';
+                }
+
+                if (this.finished) {
+                    html += '<div class="info-highlight" style="background: #d4edda; border-color: #28a745;">✓ LOKALNI MINIMUM PRONAĐEN!</div>';
+                } else {
+                    html += '<div class="info-row">Pretraživanje u toku...</div>';
+                }
+
+                // Pseudokod
+                const pseudocode = this.algorithm === 'local' ? `
+x ← x⁰
+repeat
+  N(x) ← okolina od x
+  x' ← najbolji(N(x))
+  if f(x') < f(x):
+    x ← x'
+until nema poboljšanja
+                ` : `
+x ← x⁰, TabuList ← ∅
+repeat
+  N(x) ← okolina od x
+  N'(x) ← N(x) \\ TabuList
+  x' ← najbolji(N'(x))
+  x ← x'
+  add x to TabuList
+  if |TabuList| > tenure:
+    remove oldest from TabuList
+until stop criterion
+                `;
+
+                html += `<div class="pseudocode"><strong>PSEUDOKOD:</strong>${pseudocode}</div>`;
+
+                info.innerHTML = html;
+            }
+
+            onCanvasClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const func = this.getFunction();
+                const range = func.range;
+
+                // Map canvas koordinata na prostor funkcije
+                const x0 = range[0] + (x / this.canvas.width) * (range[1] - range[0]);
+                const y0 = range[1] - (y / this.canvas.height) * (range[1] - range[0]);
+
+                this.setStartPoint([x0, y0]);
+            }
+
+            setStartPoint(point) {
+                this.currentSolution = point;
+                this.history = [point];
+                this.iteration = 0;
+                this.finished = false;
+                this.currentNeighbors = [];
+                this.bestNeighbor = null;
+                this.tabuList = [];
+                this.stopRequested = false;
+
+                const func = this.getFunction();
+                this.bestFoundSolution = [...point];
+                this.bestFoundValue = func.func(point);
+
+                console.log(`Početna tačka: x = [${point[0].toFixed(3)}, ${point[1].toFixed(3)}], f(x) = ${this.bestFoundValue.toFixed(3)}`);
+
+                this.updateDisplay();
+            }
+
+            randomStart() {
+                const func = this.getFunction();
+                const range = func.range;
+                const x0 = Math.random() * (range[1] - range[0]) + range[0];
+                const y0 = Math.random() * (range[1] - range[0]) + range[0];
+
+                this.setStartPoint([x0, y0]);
+            }
+
+            step() {
+                if (!this.currentSolution) {
+                    alert('Prvo odaberite početnu tačku!');
+                    return;
+                }
+
+                if (this.finished) {
+                    alert('Pretraživanje je završeno! Odaberite novu početnu tačku.');
+                    return;
+                }
+
+                if (this.algorithm === 'local') {
+                    this.localSearchStep();
+                } else {
+                    this.tabuSearchStep();
+                }
+
+                this.updateDisplay();
+            }
+
+            localSearchStep() {
+                const func = this.getFunction();
+
+                // Generiši okolinu
+                const neighbors = this.generateNeighborhood(this.currentSolution, this.delta);
+                this.currentNeighbors = neighbors;
+
+                // Evaluiraj susjedne tačke
+                const neighborValues = neighbors.map(n => func.func(n));
+                const currentValue = func.func(this.currentSolution);
+
+                // Nađi najbolju susjednu tačku
+                const bestIdx = neighborValues.indexOf(Math.min(...neighborValues));
+                this.bestNeighbor = neighbors[bestIdx];
+                const bestValue = neighborValues[bestIdx];
+
+                // Ažuriraj najbolje otkriveno rješenje
+                if (currentValue < this.bestFoundValue) {
+                    this.bestFoundSolution = [...this.currentSolution];
+                    this.bestFoundValue = currentValue;
+                }
+
+                console.log(`\nIteracija ${this.iteration + 1}:`);
+                console.log(`  Trenutno: f(x) = ${currentValue.toFixed(3)}`);
+                console.log(`  Najbolji susjed: f(x) = ${bestValue.toFixed(3)}`);
+                console.log(`  ★ Najbolje otkriveno: f(x) = ${this.bestFoundValue.toFixed(3)}`);
+
+                // Provjeri uslov zaustavljanja
+                if (bestValue >= currentValue) {
+                    console.log('  → LOKALNI MINIMUM PRONAĐEN!');
+                    this.finished = true;
+                } else {
+                    this.currentSolution = this.bestNeighbor;
+                    this.history.push([...this.bestNeighbor]);
+                    this.iteration++;
+                    console.log('  → Pomak na bolju tačku');
+                }
+            }
+
+            tabuSearchStep() {
+                const func = this.getFunction();
+
+                // Generiši okolinu
+                const neighbors = this.generateNeighborhood(this.currentSolution, this.delta);
+                this.currentNeighbors = neighbors;
+
+                // Filtriraj tabu tačke
+                let allowedNeighbors = neighbors.filter(n =>
+                    !this.tabuList.some(t => this.pointsEqual(n, t))
+                );
+
+                // Aspiration criterion - ako su svi tabu, dozvoli sve
+                if (allowedNeighbors.length === 0) {
+                    console.log('  NAPOMENA: Svi susjedi su tabu! Koristim aspiration criterion.');
+                    allowedNeighbors = neighbors;
+                }
+
+                // Evaluiraj dozvoljene susjedne tačke
+                const neighborValues = allowedNeighbors.map(n => func.func(n));
+                const currentValue = func.func(this.currentSolution);
+
+                // Nađi najbolju dozvoljenu susjednu tačku
+                const bestIdx = neighborValues.indexOf(Math.min(...neighborValues));
+                this.bestNeighbor = allowedNeighbors[bestIdx];
+                const bestValue = neighborValues[bestIdx];
+
+                // Ažuriraj najbolje otkriveno rješenje
+                if (currentValue < this.bestFoundValue) {
+                    this.bestFoundSolution = [...this.currentSolution];
+                    this.bestFoundValue = currentValue;
+                }
+
+                console.log(`\nIteracija ${this.iteration + 1} (Tabu Search):`);
+                console.log(`  Trenutno: f(x) = ${currentValue.toFixed(3)}`);
+                console.log(`  Tabu lista: ${this.tabuList.length}/${this.tabuTenure}`);
+                console.log(`  Dozvoljeni susjedi: ${allowedNeighbors.length}/8`);
+                console.log(`  Najbolji dozvoljeni susjed: f(x) = ${bestValue.toFixed(3)}`);
+                console.log(`  ★ Najbolje otkriveno: f(x) = ${this.bestFoundValue.toFixed(3)}`);
+
+                // Dodaj trenutnu tačku u tabu listu
+                this.tabuList.push([...this.currentSolution]);
+
+                // Ograniči dužinu tabu liste
+                if (this.tabuList.length > this.tabuTenure) {
+                    const removed = this.tabuList.shift();
+                    console.log(`  → Uklonjena iz tabu liste: [${removed[0].toFixed(3)}, ${removed[1].toFixed(3)}]`);
+                }
+
+                // Pomjeri se na najbolju dozvoljenu tačku
+                this.currentSolution = this.bestNeighbor;
+                this.history.push([...this.bestNeighbor]);
+                this.iteration++;
+
+                // Provjeri uslov zaustavljanja
+                if (this.iteration >= this.maxIterations) {
+                    console.log(`  → Dostignut maksimalan broj iteracija (${this.maxIterations})!`);
+                    this.finished = true;
+                } else {
+                    console.log('  → Pomak na tačku (može biti i gora!)');
+                }
+            }
+
+            async runToCompletion() {
+                if (!this.currentSolution) {
+                    alert('Prvo odaberite početnu tačku!');
+                    return;
+                }
+
+                if (this.finished) {
+                    alert('Pretraživanje je već završeno!');
+                    return;
+                }
+
+                this.stopRequested = false;
+                this.isRunning = true;
+
+                while (!this.finished && !this.stopRequested) {
+                    this.step();
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+
+                this.isRunning = false;
+
+                if (this.bestFoundSolution) {
+                    const title = this.stopRequested ? 'PRETRAŽIVANJE ZAUSTAVLJENO!' : 'PRETRAŽIVANJE ZAVRŠENO!';
+                    const message = `${title}\n\n★ NAJBOLJA OTKRIVENA TAČKA ★\n\nx = [${this.bestFoundSolution[0].toFixed(6)}, ${this.bestFoundSolution[1].toFixed(6)}]\n\nf(x) = ${this.bestFoundValue.toFixed(6)}\n\nUkupno iteracija: ${this.iteration}`;
+                    alert(message);
+                }
+
+                this.stopRequested = false;
+            }
+
+            stop() {
+                this.stopRequested = true;
+                console.log('Zaustavljanje pretraživanja zatraženo...');
+            }
+
+            reset() {
+                this.currentSolution = null;
+                this.history = [];
+                this.currentNeighbors = [];
+                this.bestNeighbor = null;
+                this.iteration = 0;
+                this.finished = false;
+                this.tabuList = [];
+                this.stopRequested = false;
+                this.bestFoundSolution = null;
+                this.bestFoundValue = Infinity;
+                this.isRunning = false;
+
+                this.updateDisplay();
+                console.log('Aplikacija resetovana!');
+            }
+
+            onAlgorithmChange() {
+                const selected = document.querySelector('input[name="algorithm"]:checked').value;
+                this.algorithm = selected;
+                this.reset();
+            }
+
+            onFunctionChange() {
+                const selected = document.querySelector('input[name="function"]:checked').value;
+                this.selectedFunction = selected;
+                this.reset();
+            }
+
+            onDeltaChange(value) {
+                this.delta = parseFloat(value);
+                document.getElementById('deltaValue').textContent = `Δ = ${this.delta.toFixed(1)}`;
+                if (this.currentSolution) {
+                    this.currentNeighbors = [];
+                    this.bestNeighbor = null;
+                    this.updateDisplay();
+                }
+            }
+
+            onTabuChange(value) {
+                this.tabuTenure = parseInt(value);
+                document.getElementById('tabuValue').textContent = `Tabu lista = ${this.tabuTenure}`;
+
+                // Skrati tabu listu ako je duža
+                if (this.tabuList.length > this.tabuTenure) {
+                    this.tabuList = this.tabuList.slice(-this.tabuTenure);
+                }
+
+                this.updateInfoDisplay();
+            }
+
+            onMaxIterChange(value) {
+                this.maxIterations = parseInt(value);
+                document.getElementById('maxIterValue').textContent = `Max iter = ${this.maxIterations}`;
+            }
+
+            switchView(mode) {
+                this.viewMode = mode;
+                if (mode === '3d') {
+                    alert('3D prikaz nije dostupan u web verziji. Koristite 2D contour prikaz.');
+                }
+                // Web verzija koristi samo 2D
+            }
+
+            showClickInstruction() {
+                alert('Kliknite bilo gdje na grafiku da postavite početnu tačku!');
+            }
+
+            showHelp() {
+                const helpText = `
+                    <h2>UPUTE ZA KORIŠTENJE - Tabu pretraživanje</h2>
+
+                    <h3>OSNOVNE FUNKCIJE:</h3>
+                    <ul>
+                        <li>Klik na grafik - postavite početnu tačku</li>
+                        <li>Slučajan start - generiši slučajnu početnu tačku</li>
+                        <li>Jedan korak - izvršite jednu iteraciju</li>
+                        <li>Do kraja - izvršite kompletno pretraživanje</li>
+                        <li>Reset - resetujte aplikaciju</li>
+                    </ul>
+
+                    <h3>ALGORITMI:</h3>
+                    <ul>
+                        <li><strong>Lokalno pretraživanje</strong> - zaustavlja se kod lokalnog minimuma</li>
+                        <li><strong>Tabu pretraživanje</strong> - nastavlja pretraživanje izbjegavajući nedavno posjećene tačke</li>
+                    </ul>
+
+                    <h3>KONTROLE:</h3>
+                    <ul>
+                        <li>Radio buttons (Algoritam) - izaberite algoritam</li>
+                        <li>Radio buttons (Funkcija) - izaberite test funkciju</li>
+                        <li>Slider (Delta) - veličina koraka (0.1 - 2.0)</li>
+                        <li>Slider (Tabu lista) - dužina tabu liste (3 - 20)</li>
+                    </ul>
+
+                    <h3>TABU LISTA:</h3>
+                    <p>Pamti posljednje posjećene tačke i sprječava vraćanje na njih. Omogućava izbjegavanje lokalnih minimuma i dalje istraživanje prostora rješenja.</p>
+
+                    <h3>LEGENDA:</h3>
+                    <ul>
+                        <li>🟢 Zelena zvijezda - globalni minimum</li>
+                        <li>🔴 Crveni krug - trenutna tačka</li>
+                        <li>🟠 Narančasti kvadrati - susjedne tačke</li>
+                        <li>❌ Crveni X - tačke u tabu listi</li>
+                        <li>💚 Zeleni dijamant - najbolji susjed</li>
+                        <li>⭐ Zlatna zvijezda - najbolja otkrivena tačka</li>
+                        <li>🟣 Ljubičasta linija - putanja</li>
+                    </ul>
+                `;
+
+                document.getElementById('modalBody').innerHTML = helpText;
+                document.getElementById('helpModal').style.display = 'flex';
+            }
+
+            showAbout() {
+                const aboutText = `
+                    <h2>O aplikaciji</h2>
+                    <h3>Tabu pretraživanje - Demo aplikacija</h3>
+                    <p><strong>Optimizacija resursa</strong></p>
+                    <p>Red. prof. dr Samim Konjicija</p>
+                    <p>Novembar 2025. godine</p>
+                    <br>
+                    <h3>Funkcionalnosti:</h3>
+                    <ul>
+                        <li>✓ Lokalno pretraživanje</li>
+                        <li>✓ Tabu pretraživanje sa podesivom tabu listom</li>
+                        <li>✓ 5 test funkcija: Kvadratna, Rastrigin, Ackley, Griewank, Levy</li>
+                        <li>✓ Interaktivni HTML5 Canvas prikaz</li>
+                        <li>✓ Prikaz tabu liste i trenutnog stanja</li>
+                        <li>✓ Real-time vizualizacija algoritma</li>
+                    </ul>
+                `;
+
+                document.getElementById('modalBody').innerHTML = aboutText;
+                document.getElementById('helpModal').style.display = 'flex';
+            }
+
+            closeModal(event) {
+                const modal = document.getElementById('helpModal');
+                if (event && event.target === modal) {
+                    modal.style.display = 'none';
+                } else if (!event) {
+                    modal.style.display = 'none';
+                }
+            }
+        }
+
+        // Pokreni aplikaciju
+        let app;
+        window.addEventListener('load', () => {
+            app = new TabuSearchApp();
+
+            console.log('='.repeat(80));
+            console.log('Tabu pretraživanje (Tabu Search) - Demo Aplikacija');
+            console.log('='.repeat(80));
+            console.log('\nFunkcionalnosti:');
+            console.log('  ✓ Lokalno pretraživanje');
+            console.log('  ✓ Tabu pretraživanje sa podesivom tabu listom');
+            console.log('  ✓ 5 test funkcija: Kvadratna, Rastrigin, Ackley, Griewank, Levy');
+            console.log('  ✓ HTML5 Canvas sa interaktivnom vizualizacijom');
+            console.log('  ✓ Prikaz tabu liste i trenutnog stanja');
+            console.log('\nKontrole:');
+            console.log('  - Kliknite na grafik da postavite početnu tačku');
+            console.log('  - Odaberite algoritam i funkciju');
+            console.log('  - Podesite parametre (delta, tabu tenure)');
+            console.log('  - Koristite dugmad za izvršavanje koraka');
+            console.log('='.repeat(80));
+        });
+
+        // Resize event
+        window.addEventListener('resize', () => {
+            if (app) {
+                app.setupCanvas();
+                app.updateDisplay();
+            }
+        });
+    </script>
+</body>
+</html>
