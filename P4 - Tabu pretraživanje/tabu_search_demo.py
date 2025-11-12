@@ -6,7 +6,7 @@ Demonstrira lokalno pretraživanje i tabu pretraživanje sa Tkinter GUI
 import numpy as np
 import tkinter as tk
 from tkinter import ttk, messagebox
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 import matplotlib.patches as patches
 from mpl_toolkits.mplot3d import Axes3D
@@ -177,6 +177,10 @@ class TabuSearchDemo:
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=left_frame)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        # Toolbar za navigaciju (omogućava rotiranje 3D prikaza)
+        self.toolbar = NavigationToolbar2Tk(self.canvas, left_frame)
+        self.toolbar.update()
 
         # Klik event
         self.canvas.mpl_connect('button_press_event', self.on_click)
@@ -816,8 +820,14 @@ class TabuSearchDemo:
 
         # Prikaži dijalog sa najboljom otkrivenom tačkom
         if self.best_found_solution is not None:
+            # Različita poruka u zavisnosti da li je pretraživanje završeno ili zaustavljeno
+            if self.stop_requested:
+                title = "PRETRAŽIVANJE ZAUSTAVLJENO!"
+            else:
+                title = "PRETRAŽIVANJE ZAVRŠENO!"
+
             result_message = (
-                f"PRETRAŽIVANJE ZAVRŠENO!\n\n"
+                f"{title}\n\n"
                 f"★ NAJBOLJA OTKRIVENA TAČKA ★\n\n"
                 f"x = [{self.best_found_solution[0]:.6f}, {self.best_found_solution[1]:.6f}]\n\n"
                 f"f(x) = {self.best_found_value:.6f}\n\n"
@@ -828,9 +838,6 @@ class TabuSearchDemo:
         if self.stop_requested:
             print("Pretraživanje zaustavljeno od strane korisnika!")
             self.stop_requested = False
-        elif not self.finished:
-            print("Dostignut maksimalan broj iteracija!")
-            messagebox.showinfo("Info", "Dostignut maksimalan broj iteracija!")
 
     def on_reset(self):
         """Resetuj aplikaciju"""
@@ -854,17 +861,6 @@ class TabuSearchDemo:
         """Zaustavi pretraživanje"""
         self.stop_requested = True
         print("\nZaustavljanje pretraživanja zatraženo...")
-
-        # Prikaži dijalog sa najboljom otkrivenom tačkom
-        if self.best_found_solution is not None:
-            result_message = (
-                f"PRETRAŽIVANJE ZAUSTAVLJENO!\n\n"
-                f"★ NAJBOLJA OTKRIVENA TAČKA ★\n\n"
-                f"x = [{self.best_found_solution[0]:.6f}, {self.best_found_solution[1]:.6f}]\n\n"
-                f"f(x) = {self.best_found_value:.6f}\n\n"
-                f"Ukupno iteracija: {self.iteration}"
-            )
-            messagebox.showinfo("Rezultat pretraživanja", result_message)
 
     def switch_to_2d(self):
         """Prebaci na 2D contour prikaz"""
