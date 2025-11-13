@@ -231,7 +231,7 @@ class TabuSearchDemo:
         # Tabu tenure slider
         ttk.Label(params_frame, text="Dužina tabu liste:").pack(anchor=tk.W, pady=(10, 0))
         self.tabu_var = tk.IntVar(value=7)
-        self.tabu_scale = ttk.Scale(params_frame, from_=3, to=20,
+        self.tabu_scale = ttk.Scale(params_frame, from_=3, to=50,
                                    variable=self.tabu_var, orient=tk.HORIZONTAL,
                                    command=self.on_tabu_changed)
         self.tabu_scale.pack(fill=tk.X, pady=(0, 5))
@@ -918,7 +918,7 @@ KONTROLE:
 • Radio buttons (Algoritam) - izaberite algoritam
 • Radio buttons (Funkcija) - izaberite test funkciju
 • Slider (Delta) - veličina koraka (0.1 - 2.0)
-• Slider (Tabu lista) - dužina tabu liste (3 - 20)
+• Slider (Tabu lista) - dužina tabu liste (3 - 50)
 
 TABU LISTA:
 Pamti posljednje posjećene tačke i sprječava vraćanje na njih.
