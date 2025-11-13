@@ -202,10 +202,31 @@ class SimulatedAnnealingDemo:
         left_frame = ttk.Frame(main_container)
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Desna strana - kontrole
+        # Desna strana - kontrole (sa scrolling-om)
         right_frame = ttk.Frame(main_container, width=350)
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(5, 0))
         right_frame.pack_propagate(False)
+
+        # Canvas i scrollbar za desni panel
+        right_canvas = tk.Canvas(right_frame, width=350, highlightthickness=0)
+        right_scrollbar = ttk.Scrollbar(right_frame, orient="vertical", command=right_canvas.yview)
+        self.scrollable_right_frame = ttk.Frame(right_canvas)
+
+        self.scrollable_right_frame.bind(
+            "<Configure>",
+            lambda e: right_canvas.configure(scrollregion=right_canvas.bbox("all"))
+        )
+
+        right_canvas.create_window((0, 0), window=self.scrollable_right_frame, anchor="nw")
+        right_canvas.configure(yscrollcommand=right_scrollbar.set)
+
+        right_canvas.pack(side="left", fill="both", expand=True)
+        right_scrollbar.pack(side="right", fill="y")
+
+        # Omogući scroll sa mišem
+        def _on_mousewheel(event):
+            right_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        right_canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
         # === GRAFIK ===
         self.fig = Figure(figsize=(10, 8))
@@ -224,12 +245,12 @@ class SimulatedAnnealingDemo:
         # === KONTROLE ===
 
         # Naslov
-        title_label = ttk.Label(right_frame, text="KONTROLE",
+        title_label = ttk.Label(self.scrollable_right_frame, text="KONTROLE",
                                font=('Arial', 14, 'bold'))
         title_label.pack(pady=(0, 10))
 
         # Izbor algoritma
-        algo_frame = ttk.LabelFrame(right_frame, text="Algoritam", padding=10)
+        algo_frame = ttk.LabelFrame(self.scrollable_right_frame, text="Algoritam", padding=10)
         algo_frame.pack(fill=tk.X, pady=5)
 
         self.algo_var = tk.StringVar(value='Lokalno pretraživanje')
@@ -244,7 +265,7 @@ class SimulatedAnnealingDemo:
                        command=self.on_algorithm_changed).pack(anchor=tk.W)
 
         # Izbor funkcije
-        func_frame = ttk.LabelFrame(right_frame, text="Funkcija", padding=10)
+        func_frame = ttk.LabelFrame(self.scrollable_right_frame, text="Funkcija", padding=10)
         func_frame.pack(fill=tk.X, pady=5)
 
         self.func_var = tk.StringVar(value='Kvadratna')
@@ -253,43 +274,51 @@ class SimulatedAnnealingDemo:
                           variable=self.func_var, value=func_name,
                           command=self.on_function_changed).pack(anchor=tk.W)
 
-        # Parametri - opšti
-        params_frame = ttk.LabelFrame(right_frame, text="Parametri", padding=10)
-        params_frame.pack(fill=tk.X, pady=5)
+        # Parametri - organizovani u tabove
+        params_notebook = ttk.Notebook(self.scrollable_right_frame)
+        params_notebook.pack(fill=tk.X, pady=5)
+
+        # Tab 1: Opšti parametri (za sve algoritme)
+        general_params_frame = ttk.Frame(params_notebook, padding=10)
+        params_notebook.add(general_params_frame, text="Opšti")
 
         # Delta slider
-        ttk.Label(params_frame, text="Delta (veličina koraka):").pack(anchor=tk.W)
+        ttk.Label(general_params_frame, text="Delta (veličina koraka):").pack(anchor=tk.W)
         self.delta_var = tk.DoubleVar(value=0.5)
-        self.delta_scale = ttk.Scale(params_frame, from_=0.1, to=2.0,
+        self.delta_scale = ttk.Scale(general_params_frame, from_=0.1, to=2.0,
                                     variable=self.delta_var, orient=tk.HORIZONTAL,
                                     command=self.on_delta_changed)
         self.delta_scale.pack(fill=tk.X, pady=(0, 5))
-        self.delta_label = ttk.Label(params_frame, text=f"Δ = {self.delta:.1f}")
+        self.delta_label = ttk.Label(general_params_frame, text=f"Δ = {self.delta:.1f}")
         self.delta_label.pack(anchor=tk.W)
 
-        # Tabu tenure slider
-        ttk.Label(params_frame, text="Dužina tabu liste:").pack(anchor=tk.W, pady=(10, 0))
-        self.tabu_var = tk.IntVar(value=7)
-        self.tabu_scale = ttk.Scale(params_frame, from_=3, to=50,
-                                   variable=self.tabu_var, orient=tk.HORIZONTAL,
-                                   command=self.on_tabu_changed)
-        self.tabu_scale.pack(fill=tk.X, pady=(0, 5))
-        self.tabu_label = ttk.Label(params_frame, text=f"Tabu lista = {self.tabu_tenure}")
-        self.tabu_label.pack(anchor=tk.W)
-
         # Max iterations slider
-        ttk.Label(params_frame, text="Maks. broj iteracija:").pack(anchor=tk.W, pady=(10, 0))
+        ttk.Label(general_params_frame, text="Maks. broj iteracija:").pack(anchor=tk.W, pady=(10, 0))
         self.max_iter_var = tk.IntVar(value=5000)
-        self.max_iter_scale = ttk.Scale(params_frame, from_=100, to=10000,
+        self.max_iter_scale = ttk.Scale(general_params_frame, from_=100, to=10000,
                                        variable=self.max_iter_var, orient=tk.HORIZONTAL,
                                        command=self.on_max_iter_changed)
         self.max_iter_scale.pack(fill=tk.X, pady=(0, 5))
-        self.max_iter_label = ttk.Label(params_frame, text=f"Max iter = {self.max_iterations}")
+        self.max_iter_label = ttk.Label(general_params_frame, text=f"Max iter = {self.max_iterations}")
         self.max_iter_label.pack(anchor=tk.W)
 
-        # Parametri za simulirano hlađenje
-        sa_params_frame = ttk.LabelFrame(right_frame, text="Parametri simuliranog hlađenja", padding=10)
-        sa_params_frame.pack(fill=tk.X, pady=5)
+        # Tab 2: Parametri za Tabu pretraživanje
+        tabu_params_frame = ttk.Frame(params_notebook, padding=10)
+        params_notebook.add(tabu_params_frame, text="Tabu")
+
+        # Tabu tenure slider
+        ttk.Label(tabu_params_frame, text="Dužina tabu liste:").pack(anchor=tk.W)
+        self.tabu_var = tk.IntVar(value=7)
+        self.tabu_scale = ttk.Scale(tabu_params_frame, from_=3, to=50,
+                                   variable=self.tabu_var, orient=tk.HORIZONTAL,
+                                   command=self.on_tabu_changed)
+        self.tabu_scale.pack(fill=tk.X, pady=(0, 5))
+        self.tabu_label = ttk.Label(tabu_params_frame, text=f"Tabu lista = {self.tabu_tenure}")
+        self.tabu_label.pack(anchor=tk.W)
+
+        # Tab 3: Parametri za simulirano hlađenje
+        sa_params_frame = ttk.Frame(params_notebook, padding=10)
+        params_notebook.add(sa_params_frame, text="Sim. hlađenje")
 
         # Izbor funkcije hlađenja
         ttk.Label(sa_params_frame, text="Funkcija hlađenja:").pack(anchor=tk.W)
@@ -336,7 +365,7 @@ class SimulatedAnnealingDemo:
         self.update_cooling_params_ui()
 
         # Dugmad
-        buttons_frame = ttk.LabelFrame(right_frame, text="Akcije", padding=10)
+        buttons_frame = ttk.LabelFrame(self.scrollable_right_frame, text="Akcije", padding=10)
         buttons_frame.pack(fill=tk.X, pady=5)
 
         ttk.Button(buttons_frame, text="Klik za start",
@@ -353,7 +382,7 @@ class SimulatedAnnealingDemo:
                   command=self.on_reset).pack(fill=tk.X, pady=2)
 
         # Dugmad za prikaz
-        view_frame = ttk.LabelFrame(right_frame, text="Prikaz", padding=10)
+        view_frame = ttk.LabelFrame(self.scrollable_right_frame, text="Prikaz", padding=10)
         view_frame.pack(fill=tk.X, pady=5)
 
         view_buttons_frame = ttk.Frame(view_frame)
@@ -365,7 +394,7 @@ class SimulatedAnnealingDemo:
                   command=self.switch_to_3d).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
 
         # Info tekst
-        info_frame = ttk.LabelFrame(right_frame, text="Status", padding=10)
+        info_frame = ttk.LabelFrame(self.scrollable_right_frame, text="Status", padding=10)
         info_frame.pack(fill=tk.BOTH, expand=True, pady=5)
 
         # Text widget sa scrollbar-om
