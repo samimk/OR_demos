@@ -612,6 +612,11 @@ class TabuSearchDemo:
 
     def on_click(self, event):
         """Postavi početnu tačku klikom miša"""
+        # Provjeri da li je toolbar u aktivnom modu (zoom, pan, etc.)
+        # Ako jeste, ne postavljaj početnu tačku
+        if self.toolbar.mode != '':
+            return
+
         if event.inaxes == self.ax:
             x0 = [event.xdata, event.ydata]
 
