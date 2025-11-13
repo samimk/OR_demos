@@ -135,7 +135,7 @@ class SimulatedAnnealingDemo:
     def __init__(self, root):
         self.root = root
         self.root.title("Simulirano hlađenje - Demo aplikacija")
-        self.root.geometry("1400x900")
+        self.root.geometry("1400x1000")
 
         # Parametri
         self.selected_function = 'Kvadratna'
@@ -202,32 +202,52 @@ class SimulatedAnnealingDemo:
         left_frame = ttk.Frame(main_container)
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Desna strana - kontrole (sa scrolling-om)
-        right_frame = ttk.Frame(main_container, width=350)
-        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(5, 0))
+        # Desna strana - kontrole
+        right_frame = ttk.Frame(main_container, width=380)
+        right_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=(5, 0))
         right_frame.pack_propagate(False)
 
         # Canvas i scrollbar za desni panel
-        right_canvas = tk.Canvas(right_frame, width=350, highlightthickness=0)
+        right_canvas = tk.Canvas(right_frame, highlightthickness=0, bg='white')
         right_scrollbar = ttk.Scrollbar(right_frame, orient="vertical", command=right_canvas.yview)
-        self.scrollable_right_frame = ttk.Frame(right_canvas, width=330)
-        self.scrollable_right_frame.pack_propagate(False)
 
-        self.scrollable_right_frame.bind(
-            "<Configure>",
-            lambda e: right_canvas.configure(scrollregion=right_canvas.bbox("all"))
-        )
+        # Scrollable frame
+        self.scrollable_right_frame = ttk.Frame(right_canvas)
 
-        right_canvas.create_window((0, 0), window=self.scrollable_right_frame, anchor="nw", width=330)
+        # Bind configure event
+        def on_frame_configure(event):
+            right_canvas.configure(scrollregion=right_canvas.bbox("all"))
+
+        self.scrollable_right_frame.bind("<Configure>", on_frame_configure)
+
+        # Create window in canvas
+        canvas_window = right_canvas.create_window((0, 0), window=self.scrollable_right_frame, anchor="nw")
+
+        # Configure canvas scrolling
         right_canvas.configure(yscrollcommand=right_scrollbar.set)
 
-        right_canvas.pack(side="left", fill="both", expand=True)
-        right_scrollbar.pack(side="right", fill="y")
+        # Pack canvas and scrollbar
+        right_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        right_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Omogući scroll sa mišem
-        def _on_mousewheel(event):
+        # Update canvas window width when canvas is resized
+        def on_canvas_configure(event):
+            right_canvas.itemconfig(canvas_window, width=event.width)
+
+        right_canvas.bind("<Configure>", on_canvas_configure)
+
+        # Mouse wheel scrolling
+        def on_mousewheel(event):
             right_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        right_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        def bind_mousewheel(event):
+            right_canvas.bind_all("<MouseWheel>", on_mousewheel)
+
+        def unbind_mousewheel(event):
+            right_canvas.unbind_all("<MouseWheel>")
+
+        right_frame.bind("<Enter>", bind_mousewheel)
+        right_frame.bind("<Leave>", unbind_mousewheel)
 
         # === GRAFIK ===
         self.fig = Figure(figsize=(10, 8))
@@ -365,6 +385,44 @@ class SimulatedAnnealingDemo:
         self.cooling_params_frame.pack(fill=tk.X, pady=(10, 0))
         self.update_cooling_params_ui()
 
+        # Tab 4: Prikaz/Vizualizacija tab
+        view_tab_frame = ttk.Frame(params_notebook, padding=10)
+        params_notebook.add(view_tab_frame, text="Prikaz")
+
+        ttk.Label(view_tab_frame, text="Režim vizualizacije:", font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(0, 10))
+
+        view_buttons_frame_tab = ttk.Frame(view_tab_frame)
+        view_buttons_frame_tab.pack(fill=tk.X, pady=5)
+
+        ttk.Button(view_buttons_frame_tab, text="2D (Contour)",
+                  command=self.switch_to_2d).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        ttk.Button(view_buttons_frame_tab, text="3D (Mesh)",
+                  command=self.switch_to_3d).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
+
+        # Dodatne informacije o prikazima
+        info_label = ttk.Label(view_tab_frame,
+                              text="2D: Konturni dijagram sa oznakama\n3D: Površinski prikaz funkcije",
+                              justify=tk.LEFT,
+                              foreground='gray')
+        info_label.pack(anchor=tk.W, pady=(10, 0))
+
+        # Tab 5: Status/Info tab
+        status_frame = ttk.Frame(params_notebook, padding=10)
+        params_notebook.add(status_frame, text="Status")
+
+        # Info tekst u tab-u
+        text_frame = ttk.Frame(status_frame)
+        text_frame.pack(fill=tk.BOTH, expand=True)
+
+        scrollbar_status = ttk.Scrollbar(text_frame)
+        scrollbar_status.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.info_text = tk.Text(text_frame, wrap=tk.WORD, height=25,
+                                font=('Courier', 9),
+                                yscrollcommand=scrollbar_status.set)
+        self.info_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar_status.config(command=self.info_text.yview)
+
         # Dugmad
         buttons_frame = ttk.LabelFrame(self.scrollable_right_frame, text="Akcije", padding=10)
         buttons_frame.pack(fill=tk.X, pady=5)
@@ -381,35 +439,6 @@ class SimulatedAnnealingDemo:
                   command=self.on_stop).pack(fill=tk.X, pady=2)
         ttk.Button(buttons_frame, text="Reset",
                   command=self.on_reset).pack(fill=tk.X, pady=2)
-
-        # Dugmad za prikaz
-        view_frame = ttk.LabelFrame(self.scrollable_right_frame, text="Prikaz", padding=10)
-        view_frame.pack(fill=tk.X, pady=5)
-
-        view_buttons_frame = ttk.Frame(view_frame)
-        view_buttons_frame.pack(fill=tk.X)
-
-        ttk.Button(view_buttons_frame, text="2D (Contour)",
-                  command=self.switch_to_2d).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
-        ttk.Button(view_buttons_frame, text="3D (Mesh)",
-                  command=self.switch_to_3d).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
-
-        # Info tekst
-        info_frame = ttk.LabelFrame(self.scrollable_right_frame, text="Status", padding=10)
-        info_frame.pack(fill=tk.BOTH, expand=True, pady=5)
-
-        # Text widget sa scrollbar-om
-        text_frame = ttk.Frame(info_frame)
-        text_frame.pack(fill=tk.BOTH, expand=True)
-
-        scrollbar = ttk.Scrollbar(text_frame)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        self.info_text = tk.Text(text_frame, wrap=tk.WORD, height=15,
-                                font=('Courier', 9),
-                                yscrollcommand=scrollbar.set)
-        self.info_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.config(command=self.info_text.yview)
 
     def update_cooling_params_ui(self):
         """Ažuriraj UI za parametre funkcije hlađenja"""
