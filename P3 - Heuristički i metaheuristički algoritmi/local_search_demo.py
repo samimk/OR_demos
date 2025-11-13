@@ -6,7 +6,7 @@ Demonstrira osnovno lokalno pretraživanje sa Tkinter GUI
 import numpy as np
 import tkinter as tk
 from tkinter import ttk, messagebox
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 import matplotlib.patches as patches
 from mpl_toolkits.mplot3d import Axes3D
@@ -170,6 +170,10 @@ class LocalSearchDemo:
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=left_frame)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        # Toolbar za navigaciju (omogućava rotiranje 3D prikaza)
+        self.toolbar = NavigationToolbar2Tk(self.canvas, left_frame)
+        self.toolbar.update()
 
         # Klik event
         self.canvas.mpl_connect('button_press_event', self.on_click)
