@@ -511,6 +511,11 @@ class LocalSearchDemo:
 
     def on_click(self, event):
         """Postavi početnu tačku klikom miša"""
+        # Provjeri da li je toolbar u aktivnom modu (zoom, pan, etc.)
+        # Ako jeste, ne postavljaj početnu tačku
+        if self.toolbar.mode != '':
+            return
+
         if event.inaxes == self.ax:
             x0 = [event.xdata, event.ydata]
 
@@ -530,7 +535,7 @@ class LocalSearchDemo:
             self.best_found_solution = x0.copy()
             self.best_found_value = f_x0
 
-            print(f"\nPostavljena početna tačka: x = [{x0[0]:.3f}, {x0[1]:.3f}], " +
+            print(f"\nPostavljena početna tačku: x = [{x0[0]:.3f}, {x0[1]:.3f}], " +
                   f"f(x) = {f_x0:.3f}")
 
             self.draw_objective_function()
