@@ -174,14 +174,15 @@ class TabuSearchDemo:
         # Canvas i scrollbar za desni panel
         right_canvas = tk.Canvas(right_frame, width=350, highlightthickness=0)
         right_scrollbar = ttk.Scrollbar(right_frame, orient="vertical", command=right_canvas.yview)
-        self.scrollable_right_frame = ttk.Frame(right_canvas)
+        self.scrollable_right_frame = ttk.Frame(right_canvas, width=330)
+        self.scrollable_right_frame.pack_propagate(False)
 
         self.scrollable_right_frame.bind(
             "<Configure>",
             lambda e: right_canvas.configure(scrollregion=right_canvas.bbox("all"))
         )
 
-        right_canvas.create_window((0, 0), window=self.scrollable_right_frame, anchor="nw")
+        right_canvas.create_window((0, 0), window=self.scrollable_right_frame, anchor="nw", width=330)
         right_canvas.configure(yscrollcommand=right_scrollbar.set)
 
         right_canvas.pack(side="left", fill="both", expand=True)

@@ -210,14 +210,15 @@ class SimulatedAnnealingDemo:
         # Canvas i scrollbar za desni panel
         right_canvas = tk.Canvas(right_frame, width=350, highlightthickness=0)
         right_scrollbar = ttk.Scrollbar(right_frame, orient="vertical", command=right_canvas.yview)
-        self.scrollable_right_frame = ttk.Frame(right_canvas)
+        self.scrollable_right_frame = ttk.Frame(right_canvas, width=330)
+        self.scrollable_right_frame.pack_propagate(False)
 
         self.scrollable_right_frame.bind(
             "<Configure>",
             lambda e: right_canvas.configure(scrollregion=right_canvas.bbox("all"))
         )
 
-        right_canvas.create_window((0, 0), window=self.scrollable_right_frame, anchor="nw")
+        right_canvas.create_window((0, 0), window=self.scrollable_right_frame, anchor="nw", width=330)
         right_canvas.configure(yscrollcommand=right_scrollbar.set)
 
         right_canvas.pack(side="left", fill="both", expand=True)
@@ -325,8 +326,8 @@ class SimulatedAnnealingDemo:
         self.cooling_var = tk.StringVar(value='Geometrijska')
         cooling_options = ['Linearna', 'Geometrijska', 'Adaptivna']
         self.cooling_combo = ttk.Combobox(sa_params_frame, textvariable=self.cooling_var,
-                                         values=cooling_options, state='readonly', width=15)
-        self.cooling_combo.pack(anchor=tk.W, pady=(0, 10))
+                                         values=cooling_options, state='readonly')
+        self.cooling_combo.pack(fill=tk.X, pady=(0, 10))
         self.cooling_combo.bind('<<ComboboxSelected>>', self.on_cooling_changed)
 
         # Početna temperatura T₀
