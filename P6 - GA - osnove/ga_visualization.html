@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vizualizacija Genetičkog Algoritma</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .control-panel {
+            height: fit-content;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .control-group input,
+        .control-group select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .control-group input:focus,
+        .control-group select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-step {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-step:hover {
+            background: #218838;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .visualization-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .target-section {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .target-section h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .target-chromosome {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            letter-spacing: 2px;
+            word-break: break-all;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 2px solid #667eea;
+        }
+        
+        .population-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .chromosome-card {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            transition: all 0.3s;
+        }
+        
+        .chromosome-card.best {
+            border-color: #ffc107;
+            background: #fff8e1;
+        }
+        
+        .chromosome-card.elite {
+            border-color: #28a745;
+            background: #e8f5e9;
+        }
+        
+        .chromosome-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        
+        .chromosome-id {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .chromosome-fitness {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .chromosome-string {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+            line-height: 1.4;
+        }
+        
+        .bit-match {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .bit-mismatch {
+            color: #dc3545;
+        }
+        
+        .chart-container {
+            height: 200px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        .log-panel {
+            background: #1e1e1e;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 15px;
+            border-radius: 8px;
+            height: 150px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+        }
+        
+        .log-generation {
+            color: #ffc107;
+        }
+        
+        .log-operation {
+            color: #17a2b8;
+        }
+        
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .speed-control input[type="range"] {
+            flex: 1;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .info-tooltip {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 10px;
+            line-height: 16px;
+            cursor: help;
+            margin-left: 5px;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧬 Vizualizacija Genetičkog Algoritma</h1>
+        
+        <div class="main-grid">
+            <!-- Control Panel -->
+            <div class="panel control-panel">
+                <div class="section-title">Parametri GA</div>
+                
+                <div class="control-group">
+                    <label>Veličina populacije <span class="info-tooltip" title="Broj hromozoma u populaciji">?</span></label>
+                    <input type="number" id="populationSize" value="10" min="4" max="50">
+                </div>
+                
+                <div class="control-group">
+                    <label>Dužina hromozoma <span class="info-tooltip" title="Broj bita u svakom hromozomu">?</span></label>
+                    <input type="number" id="chromosomeLength" value="16" min="8" max="32">
+                </div>
+                
+                <div class="control-group">
+                    <label>Maks. broj generacija</label>
+                    <input type="number" id="maxGenerations" value="100" min="10" max="1000">
+                </div>
+                
+                <div class="section-title">Operatori</div>
+                
+                <div class="control-group">
+                    <label>Mehanizam selekcije</label>
+                    <select id="selectionMethod">
+                        <option value="roulette">Ruletski točak (RWS)</option>
+                        <option value="ranking">Selekcija rangiranjem</option>
+                        <option value="tournament">Turnirska selekcija</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>Operator ukrštanja</label>
+                    <select id="crossoverType">
+                        <option value="onepoint">Jedna tačka</option>
+                        <option value="twopoint">Dvije tačke</option>
+                        <option value="uniform">Uniformno</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>Vjerovatnoća ukrštanja (p<sub>c</sub>): <span id="crossoverRateValue">0.8</span></label>
+                    <input type="range" id="crossoverRate" min="0" max="1" step="0.05" value="0.8">
+                </div>
+                
+                <div class="control-group">
+                    <label>Vjerovatnoća mutacije (p<sub>m</sub>): <span id="mutationRateValue">0.01</span></label>
+                    <input type="range" id="mutationRate" min="0" max="0.1" step="0.005" value="0.01">
+                </div>
+                
+                <div class="control-group">
+                    <label>Elitizam (broj jedinki)</label>
+                    <input type="number" id="elitism" value="1" min="0" max="5">
+                </div>
+                
+                <div class="section-title">Kontrole</div>
+                
+                <button class="btn btn-primary" id="btnStart">▶ Pokreni GA</button>
+                <button class="btn btn-step" id="btnStep" disabled>⏭ Jedan korak</button>
+                <button class="btn btn-secondary" id="btnReset">🔄 Reset</button>
+                
+                <div class="control-group">
+                    <label>Brzina animacije: <span id="speedValue">50</span> ms</label>
+                    <input type="range" id="speed" min="10" max="500" value="50">
+                </div>
+            </div>
+            
+            <!-- Visualization Panel -->
+            <div class="panel visualization-panel">
+                <!-- Stats -->
+                <div class="stats-bar">
+                    <div class="stat-box">
+                        <div class="stat-value" id="currentGen">0</div>
+                        <div class="stat-label">Generacija</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="bestFitness">0</div>
+                        <div class="stat-label">Najbolji fitness</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="avgFitness">0</div>
+                        <div class="stat-label">Srednji fitness</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="diversity">100%</div>
+                        <div class="stat-label">Raznolikost</div>
+                    </div>
+                </div>
+                
+                <!-- Target -->
+                <div class="target-section">
+                    <h3>🎯 Ciljni hromozom (optimalno rješenje)</h3>
+                    <div class="target-chromosome" id="targetChromosome">-</div>
+                </div>
+                
+                <!-- Population -->
+                <div class="section-title">Populacija hromozoma</div>
+                <div class="population-grid" id="populationGrid">
+                    <p style="text-align: center; color: #666;">Kliknite "Pokreni GA" za početak</p>
+                </div>
+                
+                <!-- Chart -->
+                <div class="section-title">Graf fitnessa kroz generacije</div>
+                <div class="chart-container">
+                    <canvas id="fitnessChart"></canvas>
+                </div>
+                
+                <!-- Log -->
+                <div class="section-title">Log operacija</div>
+                <div class="log-panel" id="logPanel">
+                    <div class="log-entry">Dobrodošli u vizualizaciju GA!</div>
+                    <div class="log-entry">Postavite parametre i kliknite "Pokreni GA".</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // GA State
+        let population = [];
+        let targetChromosome = [];
+        let generation = 0;
+        let isRunning = false;
+        let animationId = null;
+        let fitnessHistory = { best: [], avg: [] };
+        
+        // DOM Elements
+        const elements = {
+            populationSize: document.getElementById('populationSize'),
+            chromosomeLength: document.getElementById('chromosomeLength'),
+            maxGenerations: document.getElementById('maxGenerations'),
+            selectionMethod: document.getElementById('selectionMethod'),
+            crossoverType: document.getElementById('crossoverType'),
+            crossoverRate: document.getElementById('crossoverRate'),
+            crossoverRateValue: document.getElementById('crossoverRateValue'),
+            mutationRate: document.getElementById('mutationRate'),
+            mutationRateValue: document.getElementById('mutationRateValue'),
+            elitism: document.getElementById('elitism'),
+            speed: document.getElementById('speed'),
+            speedValue: document.getElementById('speedValue'),
+            btnStart: document.getElementById('btnStart'),
+            btnStep: document.getElementById('btnStep'),
+            btnReset: document.getElementById('btnReset'),
+            currentGen: document.getElementById('currentGen'),
+            bestFitness: document.getElementById('bestFitness'),
+            avgFitness: document.getElementById('avgFitness'),
+            diversity: document.getElementById('diversity'),
+            targetChromosome: document.getElementById('targetChromosome'),
+            populationGrid: document.getElementById('populationGrid'),
+            logPanel: document.getElementById('logPanel')
+        };
+        
+        // Chart setup
+        const canvas = document.getElementById('fitnessChart');
+        const ctx = canvas.getContext('2d');
+        
+        // Event Listeners
+        elements.crossoverRate.addEventListener('input', (e) => {
+            elements.crossoverRateValue.textContent = e.target.value;
+        });
+        
+        elements.mutationRate.addEventListener('input', (e) => {
+            elements.mutationRateValue.textContent = e.target.value;
+        });
+        
+        elements.speed.addEventListener('input', (e) => {
+            elements.speedValue.textContent = e.target.value;
+        });
+        
+        elements.btnStart.addEventListener('click', toggleGA);
+        elements.btnStep.addEventListener('click', stepGA);
+        elements.btnReset.addEventListener('click', resetGA);
+        
+        // GA Functions
+        function initializeGA() {
+            const popSize = parseInt(elements.populationSize.value);
+            const chromLength = parseInt(elements.chromosomeLength.value);
+            
+            // Generate random target chromosome (all 1s for simplicity - easy to understand)
+            targetChromosome = Array(chromLength).fill(1);
+            
+            // Display target
+            elements.targetChromosome.textContent = targetChromosome.join('');
+            
+            // Initialize random population
+            population = [];
+            for (let i = 0; i < popSize; i++) {
+                const chromosome = [];
+                for (let j = 0; j < chromLength; j++) {
+                    chromosome.push(Math.random() < 0.5 ? 0 : 1);
+                }
+                population.push({
+                    genes: chromosome,
+                    fitness: 0
+                });
+            }
+            
+            // Calculate initial fitness
+            evaluatePopulation();
+            
+            // Reset state
+            generation = 0;
+            fitnessHistory = { best: [], avg: [] };
+            
+            // Update display
+            updateDisplay();
+            log('Inicijalizirana populacija od ' + popSize + ' hromozoma', 'generation');
+            log('Dužina hromozoma: ' + chromLength + ' bita', 'operation');
+        }
+        
+        function evaluatePopulation() {
+            population.forEach(individual => {
+                individual.fitness = calculateFitness(individual.genes);
+            });
+            
+            // Sort by fitness (descending)
+            population.sort((a, b) => b.fitness - a.fitness);
+        }
+        
+        function calculateFitness(chromosome) {
+            // Count matching bits with target
+            let matches = 0;
+            for (let i = 0; i < chromosome.length; i++) {
+                if (chromosome[i] === targetChromosome[i]) {
+                    matches++;
+                }
+            }
+            return matches;
+        }
+        
+        function selection() {
+            const method = elements.selectionMethod.value;
+            
+            switch (method) {
+                case 'roulette':
+                    return rouletteSelection();
+                case 'ranking':
+                    return rankingSelection();
+                case 'tournament':
+                    return tournamentSelection();
+                default:
+                    return rouletteSelection();
+            }
+        }
+        
+        function rouletteSelection() {
+            const totalFitness = population.reduce((sum, ind) => sum + ind.fitness, 0);
+            if (totalFitness === 0) {
+                return population[Math.floor(Math.random() * population.length)];
+            }
+            
+            let random = Math.random() * totalFitness;
+            let cumulative = 0;
+            
+            for (const individual of population) {
+                cumulative += individual.fitness;
+                if (cumulative >= random) {
+                    return individual;
+                }
+            }
+            
+            return population[population.length - 1];
+        }
+        
+        function rankingSelection() {
+            const n = population.length;
+            const SP = 1.8; // Selection pressure
+            
+            // Calculate rank-based probabilities
+            const probabilities = population.map((_, index) => {
+                const rank = n - index; // Best has highest rank
+                return (2 - SP) + 2 * (SP - 1) * (rank - 1) / (n - 1);
+            });
+            
+            const totalProb = probabilities.reduce((sum, p) => sum + p, 0);
+            let random = Math.random() * totalProb;
+            let cumulative = 0;
+            
+            for (let i = 0; i < population.length; i++) {
+                cumulative += probabilities[i];
+                if (cumulative >= random) {
+                    return population[i];
+                }
+            }
+            
+            return population[0];
+        }
+        
+        function tournamentSelection() {
+            const tournamentSize = 3;
+            let best = null;
+            
+            for (let i = 0; i < tournamentSize; i++) {
+                const candidate = population[Math.floor(Math.random() * population.length)];
+                if (!best || candidate.fitness > best.fitness) {
+                    best = candidate;
+                }
+            }
+            
+            return best;
+        }
+        
+        function crossover(parent1, parent2) {
+            const type = elements.crossoverType.value;
+            const rate = parseFloat(elements.crossoverRate.value);
+            
+            if (Math.random() > rate) {
+                // No crossover, return copies
+                return [
+                    { genes: [...parent1.genes], fitness: 0 },
+                    { genes: [...parent2.genes], fitness: 0 }
+                ];
+            }
+            
+            let child1, child2;
+            
+            switch (type) {
+                case 'onepoint':
+                    [child1, child2] = onePointCrossover(parent1.genes, parent2.genes);
+                    break;
+                case 'twopoint':
+                    [child1, child2] = twoPointCrossover(parent1.genes, parent2.genes);
+                    break;
+                case 'uniform':
+                    [child1, child2] = uniformCrossover(parent1.genes, parent2.genes);
+                    break;
+                default:
+                    [child1, child2] = onePointCrossover(parent1.genes, parent2.genes);
+            }
+            
+            return [
+                { genes: child1, fitness: 0 },
+                { genes: child2, fitness: 0 }
+            ];
+        }
+        
+        function onePointCrossover(genes1, genes2) {
+            const point = Math.floor(Math.random() * (genes1.length - 1)) + 1;
+            
+            const child1 = [...genes1.slice(0, point), ...genes2.slice(point)];
+            const child2 = [...genes2.slice(0, point), ...genes1.slice(point)];
+            
+            return [child1, child2];
+        }
+        
+        function twoPointCrossover(genes1, genes2) {
+            let point1 = Math.floor(Math.random() * genes1.length);
+            let point2 = Math.floor(Math.random() * genes1.length);
+            
+            if (point1 > point2) [point1, point2] = [point2, point1];
+            
+            const child1 = [
+                ...genes1.slice(0, point1),
+                ...genes2.slice(point1, point2),
+                ...genes1.slice(point2)
+            ];
+            const child2 = [
+                ...genes2.slice(0, point1),
+                ...genes1.slice(point1, point2),
+                ...genes2.slice(point2)
+            ];
+            
+            return [child1, child2];
+        }
+        
+        function uniformCrossover(genes1, genes2) {
+            const child1 = [];
+            const child2 = [];
+            
+            for (let i = 0; i < genes1.length; i++) {
+                if (Math.random() < 0.5) {
+                    child1.push(genes1[i]);
+                    child2.push(genes2[i]);
+                } else {
+                    child1.push(genes2[i]);
+                    child2.push(genes1[i]);
+                }
+            }
+            
+            return [child1, child2];
+        }
+        
+        function mutate(individual) {
+            const rate = parseFloat(elements.mutationRate.value);
+            let mutations = 0;
+            
+            for (let i = 0; i < individual.genes.length; i++) {
+                if (Math.random() < rate) {
+                    individual.genes[i] = individual.genes[i] === 0 ? 1 : 0;
+                    mutations++;
+                }
+            }
+            
+            return mutations;
+        }
+        
+        function evolve() {
+            const elitismCount = parseInt(elements.elitism.value);
+            const popSize = population.length;
+            
+            // Keep elite individuals
+            const newPopulation = [];
+            for (let i = 0; i < elitismCount && i < population.length; i++) {
+                newPopulation.push({
+                    genes: [...population[i].genes],
+                    fitness: population[i].fitness
+                });
+            }
+            
+            // Generate rest of population
+            while (newPopulation.length < popSize) {
+                // Selection
+                const parent1 = selection();
+                const parent2 = selection();
+                
+                // Crossover
+                const [child1, child2] = crossover(parent1, parent2);
+                
+                // Mutation
+                mutate(child1);
+                mutate(child2);
+                
+                newPopulation.push(child1);
+                if (newPopulation.length < popSize) {
+                    newPopulation.push(child2);
+                }
+            }
+            
+            population = newPopulation;
+            evaluatePopulation();
+            generation++;
+            
+            // Record history
+            const bestFit = population[0].fitness;
+            const avgFit = population.reduce((sum, ind) => sum + ind.fitness, 0) / population.length;
+            fitnessHistory.best.push(bestFit);
+            fitnessHistory.avg.push(avgFit);
+            
+            updateDisplay();
+            
+            // Check termination conditions
+            if (bestFit === targetChromosome.length) {
+                stopGA();
+                log('🎉 Optimalno rješenje pronađeno u generaciji ' + generation + '!', 'generation');
+                return false;
+            }
+            
+            if (generation >= parseInt(elements.maxGenerations.value)) {
+                stopGA();
+                log('Dostignut maksimalni broj generacija', 'generation');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        function updateDisplay() {
+            // Update stats
+            elements.currentGen.textContent = generation;
+            
+            if (population.length > 0) {
+                const bestFit = population[0].fitness;
+                const avgFit = (population.reduce((sum, ind) => sum + ind.fitness, 0) / population.length).toFixed(2);
+                
+                elements.bestFitness.textContent = bestFit + '/' + targetChromosome.length;
+                elements.avgFitness.textContent = avgFit;
+                
+                // Calculate diversity (unique chromosomes)
+                const uniqueGenes = new Set(population.map(ind => ind.genes.join('')));
+                const diversity = ((uniqueGenes.size / population.length) * 100).toFixed(0);
+                elements.diversity.textContent = diversity + '%';
+            }
+            
+            // Update population grid
+            updatePopulationGrid();
+            
+            // Update chart
+            drawChart();
+        }
+        
+        function updatePopulationGrid() {
+            elements.populationGrid.innerHTML = '';
+            
+            population.forEach((individual, index) => {
+                const card = document.createElement('div');
+                card.className = 'chromosome-card';
+                
+                if (index === 0) {
+                    card.classList.add('best');
+                } else if (index < parseInt(elements.elitism.value)) {
+                    card.classList.add('elite');
+                }
+                
+                // Create chromosome string with highlighting
+                let genesHTML = '';
+                for (let i = 0; i < individual.genes.length; i++) {
+                    const bit = individual.genes[i];
+                    const isMatch = bit === targetChromosome[i];
+                    genesHTML += `<span class="${isMatch ? 'bit-match' : 'bit-mismatch'}">${bit}</span>`;
+                }
+                
+                card.innerHTML = `
+                    <div class="chromosome-header">
+                        <span class="chromosome-id">#${index + 1}${index === 0 ? ' 👑' : ''}</span>
+                        <span class="chromosome-fitness">Fitness: ${individual.fitness}/${targetChromosome.length}</span>
+                    </div>
+                    <div class="chromosome-string">${genesHTML}</div>
+                `;
+                
+                elements.populationGrid.appendChild(card);
+            });
+        }
+        
+        function drawChart() {
+            const width = canvas.width = canvas.parentElement.clientWidth - 30;
+            const height = canvas.height = canvas.parentElement.clientHeight - 30;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            if (fitnessHistory.best.length < 2) return;
+            
+            const maxFitness = targetChromosome.length;
+            const padding = 40;
+            const chartWidth = width - padding * 2;
+            const chartHeight = height - padding * 2;
+            
+            // Draw axes
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, height - padding);
+            ctx.lineTo(width - padding, height - padding);
+            ctx.stroke();
+            
+            // Draw labels
+            ctx.fillStyle = '#666';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Generacija', width / 2, height - 5);
+            
+            ctx.save();
+            ctx.translate(10, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Fitness', 0, 0);
+            ctx.restore();
+            
+            // Draw best fitness line
+            const xStep = chartWidth / (fitnessHistory.best.length - 1);
+            
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            fitnessHistory.best.forEach((fitness, i) => {
+                const x = padding + i * xStep;
+                const y = height - padding - (fitness / maxFitness) * chartHeight;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            
+            // Draw average fitness line
+            ctx.strokeStyle = '#28a745';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            fitnessHistory.avg.forEach((fitness, i) => {
+                const x = padding + i * xStep;
+                const y = height - padding - (fitness / maxFitness) * chartHeight;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Legend
+            ctx.fillStyle = '#667eea';
+            ctx.fillRect(width - 120, 10, 10, 10);
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'left';
+            ctx.fillText('Najbolji', width - 105, 19);
+            
+            ctx.fillStyle = '#28a745';
+            ctx.fillRect(width - 120, 25, 10, 10);
+            ctx.fillStyle = '#333';
+            ctx.fillText('Prosjek', width - 105, 34);
+        }
+        
+        function log(message, type = '') {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            if (type === 'generation') {
+                entry.innerHTML = `<span class="log-generation">[Gen ${generation}]</span> ${message}`;
+            } else if (type === 'operation') {
+                entry.innerHTML = `<span class="log-operation">[OP]</span> ${message}`;
+            } else {
+                entry.textContent = message;
+            }
+            
+            elements.logPanel.appendChild(entry);
+            elements.logPanel.scrollTop = elements.logPanel.scrollHeight;
+        }
+        
+        function toggleGA() {
+            if (!isRunning) {
+                if (generation === 0) {
+                    initializeGA();
+                }
+                startGA();
+            } else {
+                stopGA();
+            }
+        }
+        
+        function startGA() {
+            isRunning = true;
+            elements.btnStart.textContent = '⏸ Pauziraj';
+            elements.btnStep.disabled = true;
+            
+            const speed = parseInt(elements.speed.value);
+            
+            function step() {
+                if (!isRunning) return;
+                
+                const shouldContinue = evolve();
+                
+                if (shouldContinue && isRunning) {
+                    animationId = setTimeout(step, speed);
+                }
+            }
+            
+            step();
+        }
+        
+        function stopGA() {
+            isRunning = false;
+            elements.btnStart.textContent = '▶ Nastavi';
+            elements.btnStep.disabled = false;
+            
+            if (animationId) {
+                clearTimeout(animationId);
+                animationId = null;
+            }
+        }
+        
+        function stepGA() {
+            if (generation === 0) {
+                initializeGA();
+            }
+            evolve();
+            log('Izvršen jedan korak evolucije', 'operation');
+        }
+        
+        function resetGA() {
+            stopGA();
+            generation = 0;
+            population = [];
+            fitnessHistory = { best: [], avg: [] };
+            
+            elements.currentGen.textContent = '0';
+            elements.bestFitness.textContent = '0';
+            elements.avgFitness.textContent = '0';
+            elements.diversity.textContent = '100%';
+            elements.targetChromosome.textContent = '-';
+            elements.populationGrid.innerHTML = '<p style="text-align: center; color: #666;">Kliknite "Pokreni GA" za početak</p>';
+            elements.btnStart.textContent = '▶ Pokreni GA';
+            elements.btnStep.disabled = false;
+            
+            // Clear chart
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Clear log
+            elements.logPanel.innerHTML = '<div class="log-entry">GA resetiran. Spreman za novi pokušaj.</div>';
+        }
+        
+        // Initial chart draw
+        window.addEventListener('resize', drawChart);
+    </script>
+    
+    <footer style="text-align: center; padding: 15px; margin-top: 20px; background-color: #2c3e50; color: white; font-size: 14px; border-radius: 5px;">
+        Optimizacija resursa, Red. prof. dr Samim Konjicija, 2025. godina
+    </footer>
+</body>
+</html>
