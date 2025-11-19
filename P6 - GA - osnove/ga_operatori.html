@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GA Operatori - Vizualizacija</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .control-panel {
+            height: fit-content;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .control-group input,
+        .control-group select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        #canvas {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: crosshair;
+            background: #f8f9fa;
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .binary-display {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: white;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 5px 0;
+            word-break: break-all;
+        }
+
+        .parent {
+            color: #0066cc;
+        }
+
+        .child {
+            color: #00aa00;
+        }
+
+        .mutated {
+            color: #ff6600;
+        }
+
+        .bit-changed {
+            background-color: #ffff00;
+            font-weight: bold;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .radio-group input[type="radio"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧬 Vizualizacija GA operatora</h1>
+
+        <div class="main-grid">
+            <!-- Control Panel -->
+            <div class="panel control-panel">
+                <div class="section-title">Osnovne postavke</div>
+
+                <div class="control-group">
+                    <label>Operator:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="operator" value="crossover" checked>
+                            Ukrštanje
+                        </label>
+                        <label>
+                            <input type="radio" name="operator" value="mutation">
+                            Mutacija
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Dužina binarnog stringa (po varijabli):</label>
+                    <input type="number" id="stringLength" value="8" min="4" max="16">
+                </div>
+
+                <div class="control-group">
+                    <label>Broj pokušaja:</label>
+                    <input type="number" id="numAttempts" value="5" min="1" max="20">
+                </div>
+
+                <div class="section-title">Parametri ukrštanja</div>
+
+                <div class="control-group">
+                    <label>Tip ukrštanja:</label>
+                    <select id="crossoverType">
+                        <option value="onepoint">Jedna tačka</option>
+                        <option value="twopoint">Dvije tačke</option>
+                        <option value="uniform">Uniformno</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Vjerovatnoća ukrštanja (p<sub>c</sub>): <span id="crossoverRateValue">0.8</span></label>
+                    <input type="range" id="crossoverRate" min="0" max="1" step="0.05" value="0.8">
+                </div>
+
+                <div class="section-title">Parametri mutacije</div>
+
+                <div class="control-group">
+                    <label>Vjerovatnoća mutacije (p<sub>m</sub>): <span id="mutationRateValue">0.01</span></label>
+                    <input type="range" id="mutationRate" min="0" max="0.2" step="0.01" value="0.01">
+                </div>
+
+                <div class="section-title">Akcije</div>
+
+                <button class="btn btn-primary" id="btnExecute">Izvrši operaciju</button>
+                <button class="btn btn-secondary" id="btnReset">Reset</button>
+
+                <div class="info-box">
+                    <h3>Statistika:</h3>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Pokušaja</div>
+                            <div class="stat-value" id="attemptsCount">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Odabrano</div>
+                            <div class="stat-value" id="selectedCount">0/0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="panel">
+                <div class="section-title" id="canvasTitle">Kliknite da odaberete roditelje (2 tačke)</div>
+                <canvas id="canvas" width="900" height="600"></canvas>
+
+                <div class="info-box" id="resultsBox" style="display: none;">
+                    <h3>Rezultati operacije:</h3>
+                    <div id="resultsContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer style="text-align: center; padding: 15px; margin: 20px auto 0; background-color: #2c3e50; color: white; font-size: 14px; border-radius: 5px; max-width: 1400px;">
+        Optimizacija resursa, Red. prof. dr Samim Konjicija, 2025. godina
+    </footer>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // State
+        let operator = 'crossover';
+        let stringLength = 8;
+        let numAttempts = 5;
+        let crossoverType = 'onepoint';
+        let crossoverRate = 0.8;
+        let mutationRate = 0.01;
+
+        let selectedPoints = [];
+        let resultPoints = [];
+        let clickEnabled = true;
+        let attemptsExecuted = 0;
+
+        const RANGE_MIN = -10;
+        const RANGE_MAX = 10;
+        const CANVAS_PADDING = 40;
+
+        // DOM Elements
+        const elements = {
+            operatorRadios: document.querySelectorAll('input[name="operator"]'),
+            stringLength: document.getElementById('stringLength'),
+            numAttempts: document.getElementById('numAttempts'),
+            crossoverType: document.getElementById('crossoverType'),
+            crossoverRate: document.getElementById('crossoverRate'),
+            crossoverRateValue: document.getElementById('crossoverRateValue'),
+            mutationRate: document.getElementById('mutationRate'),
+            mutationRateValue: document.getElementById('mutationRateValue'),
+            btnExecute: document.getElementById('btnExecute'),
+            btnReset: document.getElementById('btnReset'),
+            canvasTitle: document.getElementById('canvasTitle'),
+            attemptsCount: document.getElementById('attemptsCount'),
+            selectedCount: document.getElementById('selectedCount'),
+            resultsBox: document.getElementById('resultsBox'),
+            resultsContent: document.getElementById('resultsContent')
+        };
+
+        // Event listeners
+        elements.operatorRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                operator = e.target.value;
+                reset();
+            });
+        });
+
+        elements.stringLength.addEventListener('change', (e) => {
+            const newLength = parseInt(e.target.value);
+            if (newLength !== stringLength && newLength >= 4 && newLength <= 16) {
+                stringLength = newLength;
+                reset();
+            }
+        });
+
+        elements.numAttempts.addEventListener('change', (e) => {
+            numAttempts = parseInt(e.target.value);
+            updateTitle();
+            updateStats();
+        });
+
+        elements.crossoverType.addEventListener('change', (e) => {
+            crossoverType = e.target.value;
+        });
+
+        elements.crossoverRate.addEventListener('input', (e) => {
+            crossoverRate = parseFloat(e.target.value);
+            elements.crossoverRateValue.textContent = crossoverRate.toFixed(2);
+        });
+
+        elements.mutationRate.addEventListener('input', (e) => {
+            mutationRate = parseFloat(e.target.value);
+            elements.mutationRateValue.textContent = mutationRate.toFixed(2);
+        });
+
+        elements.btnExecute.addEventListener('click', executeOperation);
+        elements.btnReset.addEventListener('click', reset);
+
+        canvas.addEventListener('click', handleCanvasClick);
+
+        // Helper functions
+        function coordToCanvas(x, y) {
+            const canvasWidth = canvas.width - 2 * CANVAS_PADDING;
+            const canvasHeight = canvas.height - 2 * CANVAS_PADDING;
+            const range = RANGE_MAX - RANGE_MIN;
+
+            const canvasX = CANVAS_PADDING + ((x - RANGE_MIN) / range) * canvasWidth;
+            const canvasY = canvas.height - CANVAS_PADDING - ((y - RANGE_MIN) / range) * canvasHeight;
+
+            return { x: canvasX, y: canvasY };
+        }
+
+        function canvasToCoord(canvasX, canvasY) {
+            const canvasWidth = canvas.width - 2 * CANVAS_PADDING;
+            const canvasHeight = canvas.height - 2 * CANVAS_PADDING;
+            const range = RANGE_MAX - RANGE_MIN;
+
+            const x = RANGE_MIN + ((canvasX - CANVAS_PADDING) / canvasWidth) * range;
+            const y = RANGE_MIN + ((canvas.height - CANVAS_PADDING - canvasY) / canvasHeight) * range;
+
+            return { x: Math.max(RANGE_MIN, Math.min(RANGE_MAX, x)),
+                     y: Math.max(RANGE_MIN, Math.min(RANGE_MAX, y)) };
+        }
+
+        function realToBinary(x1, x2) {
+            // Map from [-10, 10] to [0, 2^stringLength - 1]
+            const maxVal = Math.pow(2, stringLength) - 1;
+            const range = RANGE_MAX - RANGE_MIN;
+
+            const bin1 = Math.round(((x1 - RANGE_MIN) / range) * maxVal);
+            const bin2 = Math.round(((x2 - RANGE_MIN) / range) * maxVal);
+
+            const str1 = bin1.toString(2).padStart(stringLength, '0');
+            const str2 = bin2.toString(2).padStart(stringLength, '0');
+
+            return str1 + str2;
+        }
+
+        function binaryToReal(binString) {
+            const str1 = binString.substring(0, stringLength);
+            const str2 = binString.substring(stringLength);
+
+            const bin1 = parseInt(str1, 2);
+            const bin2 = parseInt(str2, 2);
+
+            const maxVal = Math.pow(2, stringLength) - 1;
+            const range = RANGE_MAX - RANGE_MIN;
+
+            const x1 = RANGE_MIN + (bin1 / maxVal) * range;
+            const x2 = RANGE_MIN + (bin2 / maxVal) * range;
+
+            return { x: x1, y: x2 };
+        }
+
+        function onePointCrossover(parent1, parent2) {
+            const totalLength = stringLength * 2;
+            const point = Math.floor(Math.random() * (totalLength - 1)) + 1;
+
+            const child1 = parent1.substring(0, point) + parent2.substring(point);
+            const child2 = parent2.substring(0, point) + parent1.substring(point);
+
+            return { child1, child2, point };
+        }
+
+        function twoPointCrossover(parent1, parent2) {
+            const totalLength = stringLength * 2;
+            let point1 = Math.floor(Math.random() * totalLength);
+            let point2 = Math.floor(Math.random() * totalLength);
+
+            if (point1 > point2) [point1, point2] = [point2, point1];
+
+            const child1 = parent1.substring(0, point1) + parent2.substring(point1, point2) + parent1.substring(point2);
+            const child2 = parent2.substring(0, point1) + parent1.substring(point1, point2) + parent2.substring(point2);
+
+            return { child1, child2, point1, point2 };
+        }
+
+        function uniformCrossover(parent1, parent2) {
+            let child1 = '';
+            let child2 = '';
+            const mask = [];
+
+            for (let i = 0; i < parent1.length; i++) {
+                const bit = Math.random() < 0.5 ? 0 : 1;
+                mask.push(bit);
+
+                if (bit === 0) {
+                    child1 += parent1[i];
+                    child2 += parent2[i];
+                } else {
+                    child1 += parent2[i];
+                    child2 += parent1[i];
+                }
+            }
+
+            return { child1, child2, mask };
+        }
+
+        function performCrossover(parent1Bin, parent2Bin) {
+            if (Math.random() > crossoverRate) {
+                return { child1: parent1Bin, child2: parent2Bin, occurred: false };
+            }
+
+            let result;
+            if (crossoverType === 'onepoint') {
+                result = onePointCrossover(parent1Bin, parent2Bin);
+            } else if (crossoverType === 'twopoint') {
+                result = twoPointCrossover(parent1Bin, parent2Bin);
+            } else {
+                result = uniformCrossover(parent1Bin, parent2Bin);
+            }
+
+            result.occurred = true;
+            return result;
+        }
+
+        function mutate(individual) {
+            let mutated = '';
+            const mutations = [];
+
+            for (let i = 0; i < individual.length; i++) {
+                if (Math.random() < mutationRate) {
+                    mutated += individual[i] === '0' ? '1' : '0';
+                    mutations.push(i);
+                } else {
+                    mutated += individual[i];
+                }
+            }
+
+            return { mutated, mutations };
+        }
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw axes
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+
+            const canvasWidth = canvas.width - 2 * CANVAS_PADDING;
+            const canvasHeight = canvas.height - 2 * CANVAS_PADDING;
+
+            // Vertical lines
+            for (let x = RANGE_MIN; x <= RANGE_MAX; x += 2) {
+                const pos = coordToCanvas(x, 0);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, CANVAS_PADDING);
+                ctx.lineTo(pos.x, canvas.height - CANVAS_PADDING);
+                ctx.stroke();
+
+                // Labels
+                ctx.fillStyle = '#666';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(x.toString(), pos.x, canvas.height - CANVAS_PADDING + 15);
+            }
+
+            // Horizontal lines
+            for (let y = RANGE_MIN; y <= RANGE_MAX; y += 2) {
+                const pos = coordToCanvas(0, y);
+                ctx.beginPath();
+                ctx.moveTo(CANVAS_PADDING, pos.y);
+                ctx.lineTo(canvas.width - CANVAS_PADDING, pos.y);
+                ctx.stroke();
+
+                // Labels
+                ctx.fillStyle = '#666';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(y.toString(), CANVAS_PADDING - 5, pos.y + 3);
+            }
+
+            // Draw main axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+
+            const origin = coordToCanvas(0, 0);
+
+            // X-axis
+            ctx.beginPath();
+            ctx.moveTo(CANVAS_PADDING, origin.y);
+            ctx.lineTo(canvas.width - CANVAS_PADDING, origin.y);
+            ctx.stroke();
+
+            // Y-axis
+            ctx.beginPath();
+            ctx.moveTo(origin.x, CANVAS_PADDING);
+            ctx.lineTo(origin.x, canvas.height - CANVAS_PADDING);
+            ctx.stroke();
+
+            // Axis labels
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('x₁', canvas.width - CANVAS_PADDING + 20, origin.y);
+            ctx.fillText('x₂', origin.x, CANVAS_PADDING - 20);
+        }
+
+        function drawPoint(x, y, color, label, size = 6) {
+            const pos = coordToCanvas(x, y);
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, size, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            if (label) {
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, pos.x, pos.y - 12);
+            }
+        }
+
+        function drawLine(x1, y1, x2, y2, color, width = 1, dash = []) {
+            const pos1 = coordToCanvas(x1, y1);
+            const pos2 = coordToCanvas(x2, y2);
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.setLineDash(dash);
+            ctx.beginPath();
+            ctx.moveTo(pos1.x, pos1.y);
+            ctx.lineTo(pos2.x, pos2.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function redraw() {
+            drawGrid();
+
+            // Draw selected points
+            selectedPoints.forEach((point, index) => {
+                if (operator === 'crossover') {
+                    drawPoint(point.x, point.y, '#0066cc', `P${index + 1}`, 8);
+                } else {
+                    drawPoint(point.x, point.y, '#0066cc', 'Original', 8);
+                }
+            });
+
+            // Draw result points
+            resultPoints.forEach((point, index) => {
+                if (operator === 'crossover') {
+                    drawPoint(point.x, point.y, '#00aa00', `C${index + 1}`, 6);
+                } else {
+                    drawPoint(point.x, point.y, '#ff6600', `M${index + 1}`, 6);
+                }
+            });
+
+            // Draw lines between parents and children for crossover
+            if (operator === 'crossover' && selectedPoints.length === 2 && resultPoints.length > 0) {
+                resultPoints.forEach(child => {
+                    drawLine(selectedPoints[0].x, selectedPoints[0].y, child.x, child.y, '#00aa0050', 1, [5, 5]);
+                    drawLine(selectedPoints[1].x, selectedPoints[1].y, child.x, child.y, '#00aa0050', 1, [5, 5]);
+                });
+            }
+
+            // Draw lines between original and mutated for mutation
+            if (operator === 'mutation' && selectedPoints.length === 1 && resultPoints.length > 0) {
+                resultPoints.forEach(mutated => {
+                    drawLine(selectedPoints[0].x, selectedPoints[0].y, mutated.x, mutated.y, '#ff660050', 2, [5, 5]);
+                });
+            }
+        }
+
+        function handleCanvasClick(event) {
+            if (!clickEnabled) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = event.clientX - rect.left;
+            const canvasY = event.clientY - rect.top;
+
+            const coord = canvasToCoord(canvasX, canvasY);
+
+            const requiredPoints = operator === 'crossover' ? 2 : 1;
+
+            if (selectedPoints.length < requiredPoints) {
+                selectedPoints.push(coord);
+                redraw();
+                updateStats();
+                updateTitle();
+
+                if (selectedPoints.length === requiredPoints) {
+                    clickEnabled = false;
+                    canvas.style.cursor = 'default';
+                    elements.btnExecute.disabled = false;
+                }
+            }
+        }
+
+        function updateTitle() {
+            const requiredPoints = operator === 'crossover' ? 2 : 1;
+            const selected = selectedPoints.length;
+
+            if (clickEnabled && selected < requiredPoints) {
+                if (operator === 'crossover') {
+                    elements.canvasTitle.textContent = `Kliknite da odaberete roditelje (${selected}/${requiredPoints} odabrano)`;
+                } else {
+                    elements.canvasTitle.textContent = `Kliknite da odaberete tačku za mutaciju (${selected}/${requiredPoints} odabrano)`;
+                }
+            } else if (!clickEnabled && attemptsExecuted === 0) {
+                elements.canvasTitle.textContent = 'Kliknite "Izvrši operaciju" da pokrenete';
+            } else if (attemptsExecuted > 0) {
+                if (operator === 'crossover') {
+                    elements.canvasTitle.textContent = `Izvršeno ${attemptsExecuted} ukrštanja`;
+                } else {
+                    elements.canvasTitle.textContent = `Izvršeno ${attemptsExecuted} mutacija`;
+                }
+            }
+        }
+
+        function updateStats() {
+            const requiredPoints = operator === 'crossover' ? 2 : 1;
+            elements.attemptsCount.textContent = attemptsExecuted;
+            elements.selectedCount.textContent = `${selectedPoints.length}/${requiredPoints}`;
+        }
+
+        function formatBinaryWithHighlight(binString, highlightIndices = [], original = null) {
+            let html = '';
+            for (let i = 0; i < binString.length; i++) {
+                if (original && binString[i] !== original[i]) {
+                    html += `<span class="bit-changed">${binString[i]}</span>`;
+                } else if (highlightIndices.includes(i)) {
+                    html += `<span class="bit-changed">${binString[i]}</span>`;
+                } else {
+                    html += binString[i];
+                }
+            }
+            return html;
+        }
+
+        function executeOperation() {
+            if (operator === 'crossover') {
+                executeCrossover();
+            } else {
+                executeMutation();
+            }
+        }
+
+        function executeCrossover() {
+            resultPoints = [];
+            elements.resultsBox.style.display = 'block';
+            let html = '';
+
+            const parent1Bin = realToBinary(selectedPoints[0].x, selectedPoints[0].y);
+            const parent2Bin = realToBinary(selectedPoints[1].x, selectedPoints[1].y);
+
+            html += `<div class="binary-display parent">Roditelj 1: ${formatBinaryWithHighlight(parent1Bin)}</div>`;
+            html += `<div class="binary-display parent">Roditelj 2: ${formatBinaryWithHighlight(parent2Bin)}</div>`;
+            html += '<hr>';
+
+            let successfulCrossovers = 0;
+
+            for (let i = 0; i < numAttempts; i++) {
+                const result = performCrossover(parent1Bin, parent2Bin);
+
+                if (result.occurred) {
+                    successfulCrossovers++;
+                    const child1Coord = binaryToReal(result.child1);
+                    const child2Coord = binaryToReal(result.child2);
+
+                    resultPoints.push(child1Coord);
+                    resultPoints.push(child2Coord);
+
+                    html += `<strong>Pokušaj ${i + 1} (ukrštanje izvršeno):</strong><br>`;
+
+                    if (crossoverType === 'onepoint') {
+                        html += `Tačka ukrštanja: ${result.point}<br>`;
+                    } else if (crossoverType === 'twopoint') {
+                        html += `Tačke ukrštanja: ${result.point1}, ${result.point2}<br>`;
+                    }
+
+                    html += `<div class="binary-display child">Dijete 1: ${formatBinaryWithHighlight(result.child1)}</div>`;
+                    html += `<div class="binary-display child">Dijete 2: ${formatBinaryWithHighlight(result.child2)}</div>`;
+                } else {
+                    html += `<strong>Pokušaj ${i + 1} (ukrštanje nije izvršeno - p<sub>c</sub>):</strong><br>`;
+                    html += `<div class="binary-display">Kopija roditelja</div>`;
+                }
+
+                if (i < numAttempts - 1) html += '<hr>';
+            }
+
+            html += `<hr><strong>Statistika: ${successfulCrossovers}/${numAttempts} ukrštanja izvršeno (${(successfulCrossovers/numAttempts*100).toFixed(1)}%)</strong>`;
+
+            elements.resultsContent.innerHTML = html;
+            attemptsExecuted = numAttempts;
+            updateStats();
+            updateTitle();
+            redraw();
+        }
+
+        function executeMutation() {
+            resultPoints = [];
+            elements.resultsBox.style.display = 'block';
+            let html = '';
+
+            const originalBin = realToBinary(selectedPoints[0].x, selectedPoints[0].y);
+
+            html += `<div class="binary-display parent">Original: ${formatBinaryWithHighlight(originalBin)}</div>`;
+            html += '<hr>';
+
+            let totalMutations = 0;
+
+            for (let i = 0; i < numAttempts; i++) {
+                const result = mutate(originalBin);
+
+                if (result.mutations.length > 0) {
+                    totalMutations += result.mutations.length;
+                    const mutatedCoord = binaryToReal(result.mutated);
+                    resultPoints.push(mutatedCoord);
+
+                    html += `<strong>Pokušaj ${i + 1} (${result.mutations.length} mutacija):</strong><br>`;
+                    html += `Pozicije: ${result.mutations.join(', ')}<br>`;
+                    html += `<div class="binary-display mutated">${formatBinaryWithHighlight(result.mutated, [], originalBin)}</div>`;
+                } else {
+                    html += `<strong>Pokušaj ${i + 1} (bez mutacija):</strong><br>`;
+                    html += `<div class="binary-display">${formatBinaryWithHighlight(result.mutated)}</div>`;
+                }
+
+                if (i < numAttempts - 1) html += '<hr>';
+            }
+
+            const avgMutations = (totalMutations / numAttempts).toFixed(2);
+            html += `<hr><strong>Statistika: Ukupno ${totalMutations} mutacija, prosjek ${avgMutations} po pokušaju</strong>`;
+
+            elements.resultsContent.innerHTML = html;
+            attemptsExecuted = numAttempts;
+            updateStats();
+            updateTitle();
+            redraw();
+        }
+
+        function reset() {
+            selectedPoints = [];
+            resultPoints = [];
+            clickEnabled = true;
+            attemptsExecuted = 0;
+            elements.btnExecute.disabled = true;
+            elements.resultsBox.style.display = 'none';
+            elements.resultsContent.innerHTML = '';
+            canvas.style.cursor = 'crosshair';
+            updateStats();
+            updateTitle();
+            redraw();
+        }
+
+        // Initialize
+        reset();
+    </script>
+</body>
+</html>

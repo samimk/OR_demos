@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulirano hlađenje - Demo aplikacija</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 10px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .canvas-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            min-height: 0;
+        }
+
+        #chartCanvas {
+            flex: 1;
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            cursor: crosshair;
+        }
+
+        .chart-wrapper {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+        }
+
+        .controls-panel {
+            width: 380px;
+            padding: 20px;
+            background: white;
+            overflow-y: auto;
+            border-left: 2px solid #e0e0e0;
+        }
+
+        .controls-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .control-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .control-section h3 {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .radio-group, .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .radio-group label, .checkbox-group label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .radio-group input, .checkbox-group input {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .slider-group {
+            margin-bottom: 15px;
+        }
+
+        .slider-group label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .slider-group input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .slider-value {
+            font-size: 12px;
+            color: #667eea;
+            font-weight: bold;
+            margin-top: 3px;
+        }
+
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 10px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .cooling-params {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 15px 30px;
+            font-size: 14px;
+            margin-top: auto;
+        }
+
+        .footer p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌡️ Simulirano hlađenje - Demo aplikacija</h1>
+            <p>Optimizacija resursa | Red. prof. dr Samim Konjicija | Novembar 2025.</p>
+        </div>
+
+        <div class="main-content">
+            <div class="canvas-container">
+                <div class="chart-wrapper">
+                    <canvas id="chartCanvas"></canvas>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <div class="controls-title">KONTROLE</div>
+
+                <!-- Izbor algoritma -->
+                <div class="control-section">
+                    <h3>Algoritam</h3>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="algorithm" value="local" checked onchange="app.changeAlgorithm()">
+                            Lokalno pretraživanje
+                        </label>
+                        <label>
+                            <input type="radio" name="algorithm" value="tabu" onchange="app.changeAlgorithm()">
+                            Tabu pretraživanje
+                        </label>
+                        <label>
+                            <input type="radio" name="algorithm" value="sa" onchange="app.changeAlgorithm()">
+                            Simulirano hlađenje
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Izbor funkcije -->
+                <div class="control-section">
+                    <h3>Funkcija</h3>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="function" value="quadratic" checked onchange="app.changeFunction()">
+                            Kvadratna
+                        </label>
+                        <label>
+                            <input type="radio" name="function" value="rastrigin" onchange="app.changeFunction()">
+                            Rastrigin
+                        </label>
+                        <label>
+                            <input type="radio" name="function" value="ackley" onchange="app.changeFunction()">
+                            Ackley
+                        </label>
+                        <label>
+                            <input type="radio" name="function" value="griewank" onchange="app.changeFunction()">
+                            Griewank
+                        </label>
+                        <label>
+                            <input type="radio" name="function" value="levy" onchange="app.changeFunction()">
+                            Levy
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Tabovi za parametre -->
+                <div class="control-section">
+                    <div class="tabs">
+                        <button class="tab active" onclick="app.switchTab(0)">Opšti</button>
+                        <button class="tab" onclick="app.switchTab(1)">Tabu</button>
+                        <button class="tab" onclick="app.switchTab(2)">SA</button>
+                        <button class="tab" onclick="app.switchTab(3)">Status</button>
+                    </div>
+
+                    <!-- Tab 0: Opšti parametri -->
+                    <div class="tab-content active" id="tab-0">
+                        <div class="slider-group">
+                            <label>Delta (veličina koraka):</label>
+                            <input type="range" id="deltaSlider" min="0.1" max="2.0" step="0.1" value="0.5" oninput="app.updateDelta(this.value)">
+                            <div class="slider-value" id="deltaValue">Δ = 0.5</div>
+                        </div>
+                        <div class="slider-group">
+                            <label>Maks. broj iteracija:</label>
+                            <input type="range" id="maxIterSlider" min="100" max="10000" step="100" value="5000" oninput="app.updateMaxIter(this.value)">
+                            <div class="slider-value" id="maxIterValue">Max iter = 5000</div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 1: Tabu parametri -->
+                    <div class="tab-content" id="tab-1">
+                        <div class="slider-group">
+                            <label>Dužina tabu liste:</label>
+                            <input type="range" id="tabuSlider" min="3" max="50" step="1" value="7" oninput="app.updateTabu(this.value)">
+                            <div class="slider-value" id="tabuValue">Tabu lista = 7</div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: SA parametri -->
+                    <div class="tab-content" id="tab-2">
+                        <label style="font-size: 13px; color: #555; display: block; margin-bottom: 5px;">Funkcija hlađenja:</label>
+                        <select id="coolingSchedule" onchange="app.changeCoolingSchedule()">
+                            <option value="linear">Linearna</option>
+                            <option value="geometric" selected>Geometrijska</option>
+                            <option value="adaptive">Adaptivna</option>
+                        </select>
+
+                        <div class="slider-group">
+                            <label>Početna temperatura T₀:</label>
+                            <input type="range" id="initialTempSlider" min="10" max="500" step="10" value="100" oninput="app.updateInitialTemp(this.value)">
+                            <div class="slider-value" id="initialTempValue">T₀ = 100</div>
+                        </div>
+
+                        <div class="slider-group">
+                            <label>Minimalna temperatura:</label>
+                            <input type="range" id="minTempSlider" min="0.001" max="10" step="0.001" value="0.01" oninput="app.updateMinTemp(this.value)">
+                            <div class="slider-value" id="minTempValue">T_min = 0.010</div>
+                        </div>
+
+                        <div class="slider-group">
+                            <label>Iteracije po temperaturi (M):</label>
+                            <input type="range" id="iterPerTempSlider" min="1" max="100" step="1" value="10" oninput="app.updateIterPerTemp(this.value)">
+                            <div class="slider-value" id="iterPerTempValue">M = 10</div>
+                        </div>
+
+                        <div class="cooling-params" id="coolingParams">
+                            <!-- Dinamički parametri hlađenja -->
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Status -->
+                    <div class="tab-content" id="tab-3">
+                        <div class="info-box" id="infoBox">Kliknite na grafik ili odaberite 'Slučajan start' da počnete.</div>
+                    </div>
+                </div>
+
+                <!-- Akcije -->
+                <div class="control-section">
+                    <h3>Akcije</h3>
+                    <button class="btn-primary" onclick="app.showClickInstruction()">Klik za start</button>
+                    <button class="btn-primary" onclick="app.randomStart()">Slučajan start</button>
+                    <button class="btn-primary" onclick="app.step()">Jedan korak</button>
+                    <button class="btn-primary" onclick="app.runToCompletion()">Do kraja</button>
+                    <button class="btn-secondary" onclick="app.stop()">Zaustavi</button>
+                    <button class="btn-secondary" onclick="app.reset()">Reset</button>
+                </div>
+
+                <div class="control-section">
+                    <button class="btn-primary" onclick="app.showHelp()">❓ Pomoć</button>
+                    <button class="btn-primary" onclick="app.showAbout()" style="margin-top: 8px;">📖 O aplikaciji</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Optimizacija resursa | Red. prof. dr Samim Konjicija | 2025. godina</p>
+        </div>
+    </div>
+
+    <!-- Modal za pomoć i o aplikaciji -->
+    <div id="helpModal" class="modal" onclick="app.closeModal(event)">
+        <div class="modal-content">
+            <span class="modal-close" onclick="app.closeModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // DEFINICIJE TEST FUNKCIJA
+        // ============================================================================
+
+        const FUNCTIONS = {
+            quadratic: {
+                name: 'Kvadratna',
+                func: (x) => x[0]**2 + x[1]**2,
+                range: [-5, 5],
+                globalMin: [0, 0]
+            },
+            rastrigin: {
+                name: 'Rastrigin',
+                func: (x) => {
+                    const A = 10;
+                    const n = x.length;
+                    return A * n + x.reduce((sum, xi) => sum + (xi**2 - A * Math.cos(2 * Math.PI * xi)), 0);
+                },
+                range: [-5, 5],
+                globalMin: [0, 0]
+            },
+            ackley: {
+                name: 'Ackley',
+                func: (x) => {
+                    const a = 20, b = 0.2, c = 2 * Math.PI;
+                    const n = x.length;
+                    const sum1 = x.reduce((s, xi) => s + xi**2, 0);
+                    const sum2 = x.reduce((s, xi) => s + Math.cos(c * xi), 0);
+                    return -a * Math.exp(-b * Math.sqrt(sum1/n)) - Math.exp(sum2/n) + a + Math.E;
+                },
+                range: [-5, 5],
+                globalMin: [0, 0]
+            },
+            griewank: {
+                name: 'Griewank',
+                func: (x) => {
+                    const sumPart = x.reduce((s, xi) => s + xi**2, 0) / 4000;
+                    const prodPart = x.reduce((p, xi, i) => p * Math.cos(xi / Math.sqrt(i + 1)), 1);
+                    return sumPart - prodPart + 1;
+                },
+                range: [-5, 5],
+                globalMin: [0, 0]
+            },
+            levy: {
+                name: 'Levy',
+                func: (x) => {
+                    const w = x.map(xi => 1 + (xi - 1) / 4);
+                    const term1 = Math.sin(Math.PI * w[0])**2;
+                    const term2 = w.slice(0, -1).reduce((s, wi) =>
+                        s + (wi - 1)**2 * (1 + 10 * Math.sin(Math.PI * wi + 1)**2), 0);
+                    const term3 = (w[w.length-1] - 1)**2 * (1 + Math.sin(2 * Math.PI * w[w.length-1])**2);
+                    return term1 + term2 + term3;
+                },
+                range: [-5, 5],
+                globalMin: [1, 1]
+            }
+        };
+
+        // ============================================================================
+        // APLIKACIJA
+        // ============================================================================
+
+        class SimulatedAnnealingApp {
+            constructor() {
+                this.canvas = document.getElementById('chartCanvas');
+                this.ctx = this.canvas.getContext('2d');
+
+                // Parametri
+                this.selectedFunction = 'quadratic';
+                this.algorithm = 'local'; // 'local', 'tabu', 'sa'
+                this.delta = 0.5;
+                this.tabuTenure = 7;
+                this.maxIterations = 5000;
+
+                // SA parametri
+                this.coolingSchedule = 'geometric';
+                this.initialTemp = 100;
+                this.minTemp = 0.01;
+                this.iterPerTemp = 10;
+                this.coolingDelta = 1.0;
+                this.coolingAlpha = 0.9;
+                this.coolingBeta = 0.01;
+
+                // Stanje
+                this.currentSolution = null;
+                this.history = [];
+                this.currentNeighbors = [];
+                this.bestNeighbor = null;
+                this.iteration = 0;
+                this.finished = false;
+                this.tabuList = [];
+                this.stopRequested = false;
+                this.bestFoundSolution = null;
+                this.bestFoundValue = Infinity;
+
+                // SA stanje
+                this.currentTemp = this.initialTemp;
+                this.tempIteration = 0;
+                this.tempHistory = [];
+
+                // Setup canvas
+                this.setupCanvas();
+                this.updateDisplay();
+                this.updateCoolingParamsUI();
+
+                console.log('Simulirano hlađenje - Demo aplikacija pokrenuta!');
+            }
+
+            setupCanvas() {
+                const wrapper = this.canvas.parentElement;
+                this.canvas.width = wrapper.clientWidth;
+                this.canvas.height = wrapper.clientHeight;
+
+                console.log(`Canvas dimensions: ${this.canvas.width} x ${this.canvas.height}`);
+
+                this.canvas.addEventListener('click', (e) => this.onCanvasClick(e));
+                this.drawObjectiveFunction();
+            }
+
+            getFunction() {
+                return FUNCTIONS[this.selectedFunction];
+            }
+
+            generateNeighborhood(x) {
+                const directions = [
+                    [this.delta, 0], [-this.delta, 0],
+                    [0, this.delta], [0, -this.delta],
+                    [this.delta, this.delta], [-this.delta, this.delta],
+                    [this.delta, -this.delta], [-this.delta, -this.delta]
+                ];
+                return directions.map(d => [x[0] + d[0], x[1] + d[1]]);
+            }
+
+            generateRandomNeighbor(x) {
+                const directions = [
+                    [this.delta, 0], [-this.delta, 0],
+                    [0, this.delta], [0, -this.delta],
+                    [this.delta, this.delta], [-this.delta, this.delta],
+                    [this.delta, -this.delta], [-this.delta, -this.delta]
+                ];
+                const d = directions[Math.floor(Math.random() * directions.length)];
+                return [x[0] + d[0], x[1] + d[1]];
+            }
+
+            pointsEqual(p1, p2, tolerance = 0.01) {
+                return Math.abs(p1[0] - p2[0]) < tolerance && Math.abs(p1[1] - p2[1]) < tolerance;
+            }
+
+            coolTemperature() {
+                if (this.coolingSchedule === 'linear') {
+                    this.currentTemp = Math.max(this.minTemp, this.currentTemp - this.coolingDelta);
+                } else if (this.coolingSchedule === 'geometric') {
+                    this.currentTemp = Math.max(this.minTemp, this.coolingAlpha * this.currentTemp);
+                } else { // adaptive
+                    this.currentTemp = Math.max(this.minTemp,
+                        this.currentTemp / (1 + this.coolingBeta * this.currentTemp));
+                }
+                this.tempHistory.push(this.currentTemp);
+            }
+
+            drawObjectiveFunction() {
+                const func = this.getFunction();
+                const range = func.range;
+                const gridSize = 100;
+                const step = (range[1] - range[0]) / gridSize;
+
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.fillStyle = 'white';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                const mapX = (x) => ((x - range[0]) / (range[1] - range[0])) * this.canvas.width;
+                const mapY = (y) => this.canvas.height - ((y - range[0]) / (range[1] - range[0])) * this.canvas.height;
+
+                // Kreiraj matricu vrijednosti
+                const zMatrix = [];
+                let minZ = Infinity, maxZ = -Infinity;
+
+                for (let i = 0; i <= gridSize; i++) {
+                    zMatrix[i] = [];
+                    for (let j = 0; j <= gridSize; j++) {
+                        const x = range[0] + i * step;
+                        const y = range[0] + j * step;
+                        const z = func.func([x, y]);
+                        zMatrix[i][j] = z;
+                        minZ = Math.min(minZ, z);
+                        maxZ = Math.max(maxZ, z);
+                    }
+                }
+
+                // Nacrtaj contour sa bojama
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const x = range[0] + i * step;
+                        const y = range[0] + j * step;
+                        const z = zMatrix[i][j];
+                        const normalized = (z - minZ) / (maxZ - minZ);
+
+                        // Viridis color scheme
+                        let r, g, b;
+                        if (normalized < 0.25) {
+                            const t = normalized / 0.25;
+                            r = Math.floor(68 * (1 - t) + 59 * t);
+                            g = Math.floor(1 * (1 - t) + 82 * t);
+                            b = Math.floor(84 * (1 - t) + 139 * t);
+                        } else if (normalized < 0.5) {
+                            const t = (normalized - 0.25) / 0.25;
+                            r = Math.floor(59 * (1 - t) + 33 * t);
+                            g = Math.floor(82 * (1 - t) + 145 * t);
+                            b = Math.floor(139 * (1 - t) + 140 * t);
+                        } else if (normalized < 0.75) {
+                            const t = (normalized - 0.5) / 0.25;
+                            r = Math.floor(33 * (1 - t) + 94 * t);
+                            g = Math.floor(145 * (1 - t) + 201 * t);
+                            b = Math.floor(140 * (1 - t) + 98 * t);
+                        } else {
+                            const t = (normalized - 0.75) / 0.25;
+                            r = Math.floor(94 * (1 - t) + 253 * t);
+                            g = Math.floor(201 * (1 - t) + 231 * t);
+                            b = Math.floor(98 * (1 - t) + 37 * t);
+                        }
+
+                        this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.7)`;
+                        this.ctx.fillRect(
+                            mapX(x), mapY(y + step),
+                            Math.abs(mapX(x + step) - mapX(x)) + 1,
+                            Math.abs(mapY(y) - mapY(y + step)) + 1
+                        );
+                    }
+                }
+
+                // Globalni minimum
+                const gmin = func.globalMin;
+                this.drawPoint(mapX(gmin[0]), mapY(gmin[1]), 'green', 15, '★');
+
+                // Nacrtaj stanje algoritma
+                this.drawAlgorithmState(mapX, mapY);
+            }
+
+            drawContourLine(zMatrix, gridSize, range, step, contourValue, mapX, mapY) {
+                this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+                this.ctx.lineWidth = 1.5;
+                this.ctx.beginPath();
+
+                for (let i = 0; i < gridSize - 1; i++) {
+                    for (let j = 0; j < gridSize - 1; j++) {
+                        const x0 = range[0] + i * step;
+                        const y0 = range[0] + j * step;
+
+                        const z00 = zMatrix[i][j];
+                        const z10 = zMatrix[i + 1][j];
+                        const z01 = zMatrix[i][j + 1];
+                        const z11 = zMatrix[i + 1][j + 1];
+
+                        const below00 = z00 < contourValue;
+                        const below10 = z10 < contourValue;
+                        const below01 = z01 < contourValue;
+                        const below11 = z11 < contourValue;
+
+                        if (below00 !== below10) {
+                            const t = (contourValue - z00) / (z10 - z00);
+                            const x = x0 + t * step;
+                            const y = y0;
+                            this.ctx.moveTo(mapX(x), mapY(y));
+                        }
+                        if (below00 !== below01) {
+                            const t = (contourValue - z00) / (z01 - z00);
+                            const x = x0;
+                            const y = y0 + t * step;
+                            this.ctx.lineTo(mapX(x), mapY(y));
+                        }
+                        if (below10 !== below11) {
+                            const t = (contourValue - z10) / (z11 - z10);
+                            const x = x0 + step;
+                            const y = y0 + t * step;
+                            this.ctx.lineTo(mapX(x), mapY(y));
+                        }
+                        if (below01 !== below11) {
+                            const t = (contourValue - z01) / (z11 - z01);
+                            const x = x0 + t * step;
+                            const y = y0 + step;
+                            this.ctx.lineTo(mapX(x), mapY(y));
+                        }
+                    }
+                }
+                this.ctx.stroke();
+            }
+
+            drawAlgorithmState(mapX, mapY) {
+                if (!this.currentSolution) return;
+
+                // Nacrtaj historiju
+                if (this.history.length > 1) {
+                    this.ctx.strokeStyle = 'purple';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([]);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(mapX(this.history[0][0]), mapY(this.history[0][1]));
+                    for (let i = 1; i < this.history.length; i++) {
+                        this.ctx.lineTo(mapX(this.history[i][0]), mapY(this.history[i][1]));
+                    }
+                    this.ctx.stroke();
+
+                    for (let i = 0; i < this.history.length; i++) {
+                        this.drawPoint(mapX(this.history[i][0]), mapY(this.history[i][1]), 'purple', 4);
+                    }
+                }
+
+                // Trenutna tačka
+                this.drawPoint(mapX(this.currentSolution[0]), mapY(this.currentSolution[1]), 'red', 12, '●');
+
+                // Okolina (samo za lokalno i tabu, ne za SA)
+                if (this.currentNeighbors.length > 0 && this.algorithm !== 'sa') {
+                    for (const n of this.currentNeighbors) {
+                        this.drawPoint(mapX(n[0]), mapY(n[1]), 'orange', 8, '■');
+                    }
+                }
+
+                // Tabu lista
+                if (this.algorithm === 'tabu' && this.tabuList.length > 0) {
+                    for (const t of this.tabuList) {
+                        this.drawPoint(mapX(t[0]), mapY(t[1]), 'red', 8, '✕');
+                    }
+                }
+
+                // Najbolji susjed
+                if (this.bestNeighbor && this.algorithm !== 'sa') {
+                    this.drawPoint(mapX(this.bestNeighbor[0]), mapY(this.bestNeighbor[1]), 'lime', 10, '◆');
+                }
+
+                // Najbolja otkrivena tačka
+                if (this.bestFoundSolution) {
+                    this.drawPoint(mapX(this.bestFoundSolution[0]), mapY(this.bestFoundSolution[1]), 'gold', 18, '★');
+                }
+            }
+
+            drawPoint(x, y, color, size, symbol = null) {
+                if (symbol) {
+                    this.ctx.fillStyle = color;
+                    this.ctx.font = `${size}px Arial`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(symbol, x, y);
+                } else {
+                    this.ctx.fillStyle = color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, size/2, 0, 2 * Math.PI);
+                    this.ctx.fill();
+                }
+            }
+
+            updateDisplay() {
+                this.drawObjectiveFunction();
+                this.updateInfoText();
+            }
+
+            updateInfoText() {
+                const algorithmNames = {
+                    'local': 'Lokalno pretraživanje',
+                    'tabu': 'Tabu pretraživanje',
+                    'sa': 'Simulirano hlađenje'
+                };
+
+                let info = '═══════════════════════════════════\n';
+                info += `  ALGORITAM: ${algorithmNames[this.algorithm]}\n`;
+                info += '═══════════════════════════════════\n\n';
+
+                if (!this.currentSolution) {
+                    info += "Kliknite na grafik ili odaberite\n'Slučajan start' da počnete.\n";
+                } else {
+                    const func = this.getFunction();
+                    const fx = func.func(this.currentSolution);
+
+                    info += `Iteracija: ${this.iteration}\n\n`;
+                    info += `Trenutna tačka:\n`;
+                    info += `  x = [${this.currentSolution[0].toFixed(4)}, ${this.currentSolution[1].toFixed(4)}]\n`;
+                    info += `  f(x) = ${fx.toFixed(6)}\n\n`;
+
+                    if (this.bestFoundSolution) {
+                        info += `★ NAJBOLJA OTKRIVENA:\n`;
+                        info += `  x = [${this.bestFoundSolution[0].toFixed(4)}, ${this.bestFoundSolution[1].toFixed(4)}]\n`;
+                        info += `  f(x) = ${this.bestFoundValue.toFixed(6)}\n\n`;
+                    }
+
+                    const dist = Math.sqrt(
+                        (this.currentSolution[0] - func.globalMin[0])**2 +
+                        (this.currentSolution[1] - func.globalMin[1])**2
+                    );
+                    info += `Udaljenost od globalnog: ${dist.toFixed(4)}\n\n`;
+
+                    if (this.algorithm === 'sa') {
+                        info += `Temperatura: T = ${this.currentTemp.toFixed(4)}\n`;
+                        info += `Funkcija hlađenja: ${this.coolingSchedule === 'linear' ? 'Linearna' :
+                                                      this.coolingSchedule === 'geometric' ? 'Geometrijska' : 'Adaptivna'}\n`;
+                        info += `Iteracija na T: ${this.tempIteration}/${this.iterPerTemp}\n\n`;
+                    }
+
+                    if (this.algorithm === 'tabu') {
+                        info += `Tabu lista (${this.tabuList.length}/${this.tabuTenure}):\n`;
+                        if (this.tabuList.length > 0) {
+                            this.tabuList.forEach((t, i) => {
+                                info += `  ${i+1}. [${t[0].toFixed(3)}, ${t[1].toFixed(3)}]\n`;
+                            });
+                        } else {
+                            info += '  (prazna)\n';
+                        }
+                        info += '\n';
+                    }
+
+                    if (this.finished) {
+                        info += this.algorithm === 'sa' ?
+                            '✓ MINIMALNA TEMPERATURA DOSTIGNUTA!\n' :
+                            '✓ LOKALNI MINIMUM PRONAĐEN!\n';
+                    } else {
+                        info += 'Pretraživanje u toku...\n';
+                    }
+                }
+
+                info += '\n' + '─'.repeat(35) + '\n';
+                info += 'PSEUDOKOD:\n';
+                info += '─'.repeat(35) + '\n';
+
+                if (this.algorithm === 'local') {
+                    info += 'x ← x⁰\n';
+                    info += 'repeat\n';
+                    info += '  N(x) ← okolina od x\n';
+                    info += "  x' ← najbolji(N(x))\n";
+                    info += "  if f(x') < f(x):\n";
+                    info += "    x ← x'\n";
+                    info += 'until nema poboljšanja\n';
+                } else if (this.algorithm === 'tabu') {
+                    info += 'x ← x⁰, TabuList ← ∅\n';
+                    info += 'repeat\n';
+                    info += '  N(x) ← okolina od x\n';
+                    info += "  N'(x) ← N(x) \\ TabuList\n";
+                    info += "  x' ← najbolji(N'(x))\n";
+                    info += "  x ← x'\n";
+                    info += '  add x to TabuList\n';
+                    info += '  if |TabuList| > tenure:\n';
+                    info += '    remove oldest from TabuList\n';
+                    info += 'until stop criterion\n';
+                } else { // sa
+                    info += 'x ← x⁰, T ← T₀\n';
+                    info += 'repeat\n';
+                    info += '  for i = 1 to M:\n';
+                    info += "    x' ← random(N(x))\n";
+                    info += "    Δf ← f(x') - f(x)\n";
+                    info += '    if Δf < 0:\n';
+                    info += "      x ← x'\n";
+                    info += '    else:\n';
+                    info += '      p ← exp(-Δf/T)\n';
+                    info += '      if random() < p:\n';
+                    info += "        x ← x'\n";
+                    info += '  T ← cool(T)\n';
+                    info += 'until T < T_min\n';
+                }
+
+                document.getElementById('infoBox').textContent = info;
+            }
+
+            onCanvasClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const func = this.getFunction();
+                const range = func.range;
+
+                const worldX = (x / this.canvas.width) * (range[1] - range[0]) + range[0];
+                const worldY = (1 - y / this.canvas.height) * (range[1] - range[0]) + range[0];
+
+                const x0 = [
+                    Math.max(range[0], Math.min(range[1], worldX)),
+                    Math.max(range[0], Math.min(range[1], worldY))
+                ];
+
+                this.currentSolution = x0;
+                this.history = [x0];
+                this.iteration = 0;
+                this.finished = false;
+                this.currentNeighbors = [];
+                this.bestNeighbor = null;
+                this.tabuList = [];
+                this.currentTemp = this.initialTemp;
+                this.tempIteration = 0;
+                this.tempHistory = [this.initialTemp];
+
+                const fx0 = func.func(x0);
+                this.bestFoundSolution = [...x0];
+                this.bestFoundValue = fx0;
+
+                console.log(`Postavljena početna tačka: x = [${x0[0].toFixed(3)}, ${x0[1].toFixed(3)}], f(x) = ${fx0.toFixed(3)}`);
+
+                this.updateDisplay();
+            }
+
+            randomStart() {
+                const func = this.getFunction();
+                const range = func.range;
+                const x0 = [
+                    Math.random() * (range[1] - range[0]) + range[0],
+                    Math.random() * (range[1] - range[0]) + range[0]
+                ];
+
+                this.currentSolution = x0;
+                this.history = [x0];
+                this.iteration = 0;
+                this.finished = false;
+                this.currentNeighbors = [];
+                this.bestNeighbor = null;
+                this.tabuList = [];
+                this.currentTemp = this.initialTemp;
+                this.tempIteration = 0;
+                this.tempHistory = [this.initialTemp];
+
+                const fx0 = func.func(x0);
+                this.bestFoundSolution = [...x0];
+                this.bestFoundValue = fx0;
+
+                console.log(`Nova početna tačka: x = [${x0[0].toFixed(3)}, ${x0[1].toFixed(3)}], f(x) = ${fx0.toFixed(3)}`);
+
+                this.updateDisplay();
+            }
+
+            step() {
+                if (!this.currentSolution) {
+                    alert('Prvo odaberite početnu tačku!');
+                    return;
+                }
+
+                if (this.finished) {
+                    alert('Pretraživanje je završeno! Odaberite novu početnu tačku.');
+                    return;
+                }
+
+                if (this.algorithm === 'local') {
+                    this.localSearchStep();
+                } else if (this.algorithm === 'tabu') {
+                    this.tabuSearchStep();
+                } else {
+                    this.simulatedAnnealingStep();
+                }
+
+                this.updateDisplay();
+            }
+
+            localSearchStep() {
+                const func = this.getFunction();
+                const range = func.range;
+
+                let neighbors = this.generateNeighborhood(this.currentSolution);
+                neighbors = neighbors.map(n => [
+                    Math.max(range[0], Math.min(range[1], n[0])),
+                    Math.max(range[0], Math.min(range[1], n[1]))
+                ]);
+
+                this.currentNeighbors = neighbors;
+
+                const neighborValues = neighbors.map(n => func.func(n));
+                const currentValue = func.func(this.currentSolution);
+
+                const bestIdx = neighborValues.indexOf(Math.min(...neighborValues));
+                this.bestNeighbor = neighbors[bestIdx];
+                const bestValue = neighborValues[bestIdx];
+
+                if (currentValue < this.bestFoundValue) {
+                    this.bestFoundSolution = [...this.currentSolution];
+                    this.bestFoundValue = currentValue;
+                }
+
+                console.log(`\nIteracija ${this.iteration + 1}:`);
+                console.log(`  Trenutno: x = [${this.currentSolution[0].toFixed(3)}, ${this.currentSolution[1].toFixed(3)}], f(x) = ${currentValue.toFixed(3)}`);
+                console.log(`  Najbolji susjed: x = [${this.bestNeighbor[0].toFixed(3)}, ${this.bestNeighbor[1].toFixed(3)}], f(x) = ${bestValue.toFixed(3)}`);
+
+                if (bestValue >= currentValue) {
+                    console.log('  → LOKALNI MINIMUM PRONAĐEN!');
+                    this.finished = true;
+                } else {
+                    this.currentSolution = this.bestNeighbor;
+                    this.history.push([...this.bestNeighbor]);
+                    this.iteration++;
+                    console.log('  → Pomak na bolju tačku');
+                }
+            }
+
+            tabuSearchStep() {
+                const func = this.getFunction();
+                const range = func.range;
+
+                let neighbors = this.generateNeighborhood(this.currentSolution);
+                neighbors = neighbors.map(n => [
+                    Math.max(range[0], Math.min(range[1], n[0])),
+                    Math.max(range[0], Math.min(range[1], n[1]))
+                ]);
+
+                let allowedNeighbors = neighbors.filter(n =>
+                    !this.tabuList.some(t => this.pointsEqual(n, t))
+                );
+
+                if (allowedNeighbors.length === 0) {
+                    console.log('  NAPOMENA: Svi susjedi su tabu! Koristim aspiration criterion.');
+                    allowedNeighbors = neighbors;
+                }
+
+                this.currentNeighbors = neighbors;
+
+                const neighborValues = allowedNeighbors.map(n => func.func(n));
+                const currentValue = func.func(this.currentSolution);
+
+                const bestIdx = neighborValues.indexOf(Math.min(...neighborValues));
+                this.bestNeighbor = allowedNeighbors[bestIdx];
+                const bestValue = neighborValues[bestIdx];
+
+                if (currentValue < this.bestFoundValue) {
+                    this.bestFoundSolution = [...this.currentSolution];
+                    this.bestFoundValue = currentValue;
+                }
+
+                console.log(`\nIteracija ${this.iteration + 1} (Tabu Search):`);
+                console.log(`  Trenutno: x = [${this.currentSolution[0].toFixed(3)}, ${this.currentSolution[1].toFixed(3)}], f(x) = ${currentValue.toFixed(3)}`);
+                console.log(`  Tabu lista: ${this.tabuList.length}/${this.tabuTenure}`);
+                console.log(`  Dozvoljeni susjedi: ${allowedNeighbors.length}/8`);
+
+                this.tabuList.push([...this.currentSolution]);
+
+                if (this.tabuList.length > this.tabuTenure) {
+                    const removed = this.tabuList.shift();
+                    console.log(`  → Uklonjena iz tabu liste: [${removed[0].toFixed(3)}, ${removed[1].toFixed(3)}]`);
+                }
+
+                this.currentSolution = this.bestNeighbor;
+                this.history.push([...this.bestNeighbor]);
+                this.iteration++;
+
+                if (this.iteration >= this.maxIterations) {
+                    console.log(`  → Dostignut maksimalan broj iteracija (${this.maxIterations})!`);
+                    this.finished = true;
+                } else {
+                    console.log('  → Pomak na tačku (može biti i gora!)');
+                }
+            }
+
+            simulatedAnnealingStep() {
+                const func = this.getFunction();
+                const range = func.range;
+                const currentValue = func.func(this.currentSolution);
+
+                let neighbor = this.generateRandomNeighbor(this.currentSolution);
+                neighbor = [
+                    Math.max(range[0], Math.min(range[1], neighbor[0])),
+                    Math.max(range[0], Math.min(range[1], neighbor[1]))
+                ];
+
+                const neighborValue = func.func(neighbor);
+                const deltaF = neighborValue - currentValue;
+
+                let accepted = false;
+                let acceptanceProb = 0;
+
+                if (deltaF < 0) {
+                    accepted = true;
+                    acceptanceProb = 1.0;
+                } else {
+                    acceptanceProb = this.currentTemp > 0 ? Math.exp(-deltaF / this.currentTemp) : 0;
+                    if (Math.random() < acceptanceProb) {
+                        accepted = true;
+                    }
+                }
+
+                if (currentValue < this.bestFoundValue) {
+                    this.bestFoundSolution = [...this.currentSolution];
+                    this.bestFoundValue = currentValue;
+                }
+
+                console.log(`\nIteracija ${this.iteration + 1} (Simulated Annealing):`);
+                console.log(`  Temperatura: T = ${this.currentTemp.toFixed(4)}`);
+                console.log(`  Trenutno: x = [${this.currentSolution[0].toFixed(3)}, ${this.currentSolution[1].toFixed(3)}], f(x) = ${currentValue.toFixed(3)}`);
+                console.log(`  Susjed: x = [${neighbor[0].toFixed(3)}, ${neighbor[1].toFixed(3)}], f(x) = ${neighborValue.toFixed(3)}`);
+                console.log(`  Δf = ${deltaF.toFixed(3)}, P(prihvat) = ${acceptanceProb.toFixed(4)}`);
+
+                if (accepted) {
+                    this.currentSolution = neighbor;
+                    this.history.push([...neighbor]);
+                    console.log('  → Prihvaćeno!');
+                } else {
+                    console.log('  → Odbijeno!');
+                }
+
+                this.iteration++;
+                this.tempIteration++;
+
+                if (this.tempIteration >= this.iterPerTemp) {
+                    const oldTemp = this.currentTemp;
+                    this.coolTemperature();
+                    this.tempIteration = 0;
+                    console.log(`  → Hlađenje: T = ${oldTemp.toFixed(4)} → ${this.currentTemp.toFixed(4)}`);
+
+                    if (this.currentTemp <= this.minTemp) {
+                        console.log('  → MINIMALNA TEMPERATURA DOSTIGNUTA!');
+                        this.finished = true;
+                    }
+                }
+            }
+
+            async runToCompletion() {
+                if (!this.currentSolution) {
+                    alert('Prvo odaberite početnu tačku!');
+                    return;
+                }
+
+                if (this.finished) {
+                    alert('Pretraživanje je već završeno!');
+                    return;
+                }
+
+                this.stopRequested = false;
+
+                while (!this.finished && !this.stopRequested) {
+                    this.step();
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                if (this.bestFoundSolution) {
+                    const title = this.stopRequested ? 'PRETRAŽIVANJE ZAUSTAVLJENO!' : 'PRETRAŽIVANJE ZAVRŠENO!';
+                    const message = `${title}\n\n★ NAJBOLJA OTKRIVENA TAČKA ★\n\n` +
+                        `x = [${this.bestFoundSolution[0].toFixed(6)}, ${this.bestFoundSolution[1].toFixed(6)}]\n\n` +
+                        `f(x) = ${this.bestFoundValue.toFixed(6)}\n\n` +
+                        `Ukupno iteracija: ${this.iteration}`;
+                    alert(message);
+                }
+
+                if (this.stopRequested) {
+                    console.log('Pretraživanje zaustavljeno od strane korisnika!');
+                    this.stopRequested = false;
+                }
+            }
+
+            stop() {
+                this.stopRequested = true;
+                console.log('Zaustavljanje pretraživanja zatraženo...');
+            }
+
+            reset() {
+                this.currentSolution = null;
+                this.history = [];
+                this.currentNeighbors = [];
+                this.bestNeighbor = null;
+                this.iteration = 0;
+                this.finished = false;
+                this.tabuList = [];
+                this.stopRequested = false;
+                this.bestFoundSolution = null;
+                this.bestFoundValue = Infinity;
+                this.currentTemp = this.initialTemp;
+                this.tempIteration = 0;
+                this.tempHistory = [];
+
+                this.updateDisplay();
+                console.log('Aplikacija resetovana!');
+            }
+
+            changeAlgorithm() {
+                const selected = document.querySelector('input[name="algorithm"]:checked').value;
+                this.algorithm = selected;
+                this.reset();
+            }
+
+            changeFunction() {
+                const selected = document.querySelector('input[name="function"]:checked').value;
+                this.selectedFunction = selected;
+                this.reset();
+            }
+
+            updateDelta(value) {
+                this.delta = parseFloat(value);
+                document.getElementById('deltaValue').textContent = `Δ = ${this.delta.toFixed(1)}`;
+                if (this.currentSolution) {
+                    this.currentNeighbors = [];
+                    this.bestNeighbor = null;
+                    this.updateDisplay();
+                }
+            }
+
+            updateMaxIter(value) {
+                this.maxIterations = parseInt(value);
+                document.getElementById('maxIterValue').textContent = `Max iter = ${this.maxIterations}`;
+            }
+
+            updateTabu(value) {
+                this.tabuTenure = parseInt(value);
+                document.getElementById('tabuValue').textContent = `Tabu lista = ${this.tabuTenure}`;
+                if (this.tabuList.length > this.tabuTenure) {
+                    this.tabuList = this.tabuList.slice(-this.tabuTenure);
+                }
+                this.updateInfoText();
+            }
+
+            updateInitialTemp(value) {
+                this.initialTemp = parseFloat(value);
+                document.getElementById('initialTempValue').textContent = `T₀ = ${this.initialTemp.toFixed(0)}`;
+            }
+
+            updateMinTemp(value) {
+                this.minTemp = parseFloat(value);
+                document.getElementById('minTempValue').textContent = `T_min = ${this.minTemp.toFixed(3)}`;
+            }
+
+            updateIterPerTemp(value) {
+                this.iterPerTemp = parseInt(value);
+                document.getElementById('iterPerTempValue').textContent = `M = ${this.iterPerTemp}`;
+            }
+
+            changeCoolingSchedule() {
+                this.coolingSchedule = document.getElementById('coolingSchedule').value;
+                this.updateCoolingParamsUI();
+            }
+
+            updateCoolingParamsUI() {
+                const container = document.getElementById('coolingParams');
+                container.innerHTML = '';
+
+                if (this.coolingSchedule === 'linear') {
+                    container.innerHTML = `
+                        <div class="slider-group">
+                            <label>Delta (δ):</label>
+                            <input type="range" min="0.1" max="5.0" step="0.1" value="${this.coolingDelta}"
+                                   oninput="app.updateCoolingDelta(this.value)">
+                            <div class="slider-value" id="coolingDeltaValue">δ = ${this.coolingDelta.toFixed(2)}</div>
+                        </div>
+                    `;
+                } else if (this.coolingSchedule === 'geometric') {
+                    container.innerHTML = `
+                        <div class="slider-group">
+                            <label>Alpha (α):</label>
+                            <input type="range" min="0.7" max="0.99" step="0.01" value="${this.coolingAlpha}"
+                                   oninput="app.updateCoolingAlpha(this.value)">
+                            <div class="slider-value" id="coolingAlphaValue">α = ${this.coolingAlpha.toFixed(3)}</div>
+                        </div>
+                    `;
+                } else { // adaptive
+                    container.innerHTML = `
+                        <div class="slider-group">
+                            <label>Beta (β):</label>
+                            <input type="range" min="0.001" max="0.1" step="0.001" value="${this.coolingBeta}"
+                                   oninput="app.updateCoolingBeta(this.value)">
+                            <div class="slider-value" id="coolingBetaValue">β = ${this.coolingBeta.toFixed(4)}</div>
+                        </div>
+                    `;
+                }
+            }
+
+            updateCoolingDelta(value) {
+                this.coolingDelta = parseFloat(value);
+                document.getElementById('coolingDeltaValue').textContent = `δ = ${this.coolingDelta.toFixed(2)}`;
+            }
+
+            updateCoolingAlpha(value) {
+                this.coolingAlpha = parseFloat(value);
+                document.getElementById('coolingAlphaValue').textContent = `α = ${this.coolingAlpha.toFixed(3)}`;
+            }
+
+            updateCoolingBeta(value) {
+                this.coolingBeta = parseFloat(value);
+                document.getElementById('coolingBetaValue').textContent = `β = ${this.coolingBeta.toFixed(4)}`;
+            }
+
+            switchTab(index) {
+                const tabs = document.querySelectorAll('.tab');
+                const contents = document.querySelectorAll('.tab-content');
+
+                tabs.forEach((tab, i) => {
+                    if (i === index) {
+                        tab.classList.add('active');
+                    } else {
+                        tab.classList.remove('active');
+                    }
+                });
+
+                contents.forEach((content, i) => {
+                    if (i === index) {
+                        content.classList.add('active');
+                    } else {
+                        content.classList.remove('active');
+                    }
+                });
+            }
+
+            showClickInstruction() {
+                alert('Kliknite bilo gdje na grafiku da postavite početnu tačku!');
+            }
+
+            showHelp() {
+                const helpText = `
+                    <h2>UPUTE ZA KORIŠTENJE - Simulirano hlađenje</h2>
+
+                    <h3>OSNOVNE FUNKCIJE:</h3>
+                    <ul>
+                        <li>Klik na grafik - postavite početnu tačku</li>
+                        <li>Slučajan start - generiši slučajnu početnu tačku</li>
+                        <li>Jedan korak - izvršite jednu iteraciju</li>
+                        <li>Do kraja - izvršite kompletno pretraživanje</li>
+                        <li>Reset - resetujte aplikaciju</li>
+                    </ul>
+
+                    <h3>ALGORITMI:</h3>
+                    <ul>
+                        <li><strong>Lokalno pretraživanje</strong> - zaustavlja se kod lokalnog minimuma</li>
+                        <li><strong>Tabu pretraživanje</strong> - nastavlja pretraživanje izbjegavajući nedavno posjećene tačke</li>
+                        <li><strong>Simulirano hlađenje</strong> - probabilistički algoritam inspirisan procesom hlađenja metala</li>
+                    </ul>
+
+                    <h3>SIMULIRANO HLAĐENJE:</h3>
+                    <p>Funkcije hlađenja:</p>
+                    <ul>
+                        <li>Linearna: T<sub>k+1</sub> = T<sub>k</sub> - δ</li>
+                        <li>Geometrijska: T<sub>k+1</sub> = α × T<sub>k</sub></li>
+                        <li>Adaptivna: T<sub>k+1</sub> = T<sub>k</sub> / (1 + β × T<sub>k</sub>)</li>
+                    </ul>
+
+                    <h3>PARAMETRI SA:</h3>
+                    <ul>
+                        <li>T₀ - početna temperatura (10-500)</li>
+                        <li>T_min - minimalna temperatura (0.001-10)</li>
+                        <li>M - broj iteracija po temperaturi (1-100)</li>
+                        <li>δ/α/β - parametri funkcije hlađenja</li>
+                    </ul>
+
+                    <h3>LEGENDA:</h3>
+                    <ul>
+                        <li>★ Zelena zvijezda - globalni minimum</li>
+                        <li>● Crveni krug - trenutna tačka</li>
+                        <li>★ Zlatna zvijezda - najbolja otkrivena tačka</li>
+                        <li>Ljubičasta linija - putanja</li>
+                    </ul>
+                `;
+
+                document.getElementById('modalBody').innerHTML = helpText;
+                document.getElementById('helpModal').style.display = 'block';
+            }
+
+            showAbout() {
+                const aboutText = `
+                    <h2>O aplikaciji</h2>
+                    <p style="margin-top: 20px;">
+                        <strong>Simulirano hlađenje - Demo aplikacija</strong><br><br>
+                        Optimizacija resursa<br><br>
+                        Red. prof. dr Samim Konjicija<br><br>
+                        Novembar 2025. godine
+                    </p>
+                `;
+
+                document.getElementById('modalBody').innerHTML = aboutText;
+                document.getElementById('helpModal').style.display = 'block';
+            }
+
+            closeModal(event) {
+                if (!event || event.target.id === 'helpModal') {
+                    document.getElementById('helpModal').style.display = 'none';
+                }
+            }
+        }
+
+        // Pokreni aplikaciju
+        let app;
+        window.addEventListener('load', () => {
+            app = new SimulatedAnnealingApp();
+        });
+
+        window.addEventListener('resize', () => {
+            if (app) {
+                app.setupCanvas();
+                app.updateDisplay();
+            }
+        });
+    </script>
+</body>
+</html>

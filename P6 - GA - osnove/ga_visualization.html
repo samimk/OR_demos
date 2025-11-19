@@ -329,7 +329,25 @@
                 
                 <div class="control-group">
                     <label>Dužina hromozoma <span class="info-tooltip" title="Broj bita u svakom hromozomu">?</span></label>
-                    <input type="number" id="chromosomeLength" value="16" min="8" max="32">
+                    <input type="number" id="chromosomeLength" value="8" min="8" max="32">
+                </div>
+                
+                <div class="control-group">
+                    <label>Fitness funkcija <span class="info-tooltip" title="Funkcija za evaluaciju hromozoma">?</span></label>
+                    <select id="fitnessFunction">
+                        <option value="formula1">y = 192 - |x - 64|</option>
+                        <option value="formula2">y = x²</option>
+                        <option value="formula3">y = sin(x/10) * 100 + 100</option>
+                        <option value="matchTarget">Poklapanje sa ciljnim stringom</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Cilj optimizacije <span class="info-tooltip" title="Traži maksimalnu ili minimalnu vrijednost">?</span></label>
+                    <select id="optimizationGoal">
+                        <option value="maximize">Maksimizacija</option>
+                        <option value="minimize">Minimizacija</option>
+                    </select>
                 </div>
                 
                 <div class="control-group">
@@ -373,8 +391,9 @@
                 </div>
                 
                 <div class="section-title">Kontrole</div>
-                
-                <button class="btn btn-primary" id="btnStart">▶ Pokreni GA</button>
+
+                <button class="btn btn-primary" id="btnInit">🎲 Inicijaliziraj populaciju</button>
+                <button class="btn btn-primary" id="btnStart" disabled>▶ Pokreni GA</button>
                 <button class="btn btn-step" id="btnStep" disabled>⏭ Jedan korak</button>
                 <button class="btn btn-secondary" id="btnReset">🔄 Reset</button>
                 
@@ -406,16 +425,10 @@
                     </div>
                 </div>
                 
-                <!-- Target -->
-                <div class="target-section">
-                    <h3>🎯 Ciljni hromozom (optimalno rješenje)</h3>
-                    <div class="target-chromosome" id="targetChromosome">-</div>
-                </div>
-                
                 <!-- Population -->
                 <div class="section-title">Populacija hromozoma</div>
                 <div class="population-grid" id="populationGrid">
-                    <p style="text-align: center; color: #666;">Kliknite "Pokreni GA" za početak</p>
+                    <p style="text-align: center; color: #666;">Kliknite "Inicijaliziraj populaciju" za početak</p>
                 </div>
                 
                 <!-- Chart -->
@@ -442,12 +455,15 @@
         let isRunning = false;
         let animationId = null;
         let fitnessHistory = { best: [], avg: [] };
+        let maxFitness = 192; // Maximum possible fitness for current function
         
         // DOM Elements
         const elements = {
             populationSize: document.getElementById('populationSize'),
             chromosomeLength: document.getElementById('chromosomeLength'),
             maxGenerations: document.getElementById('maxGenerations'),
+            fitnessFunction: document.getElementById('fitnessFunction'),
+            optimizationGoal: document.getElementById('optimizationGoal'),
             selectionMethod: document.getElementById('selectionMethod'),
             crossoverType: document.getElementById('crossoverType'),
             crossoverRate: document.getElementById('crossoverRate'),
@@ -457,6 +473,7 @@
             elitism: document.getElementById('elitism'),
             speed: document.getElementById('speed'),
             speedValue: document.getElementById('speedValue'),
+            btnInit: document.getElementById('btnInit'),
             btnStart: document.getElementById('btnStart'),
             btnStep: document.getElementById('btnStep'),
             btnReset: document.getElementById('btnReset'),
@@ -464,7 +481,6 @@
             bestFitness: document.getElementById('bestFitness'),
             avgFitness: document.getElementById('avgFitness'),
             diversity: document.getElementById('diversity'),
-            targetChromosome: document.getElementById('targetChromosome'),
             populationGrid: document.getElementById('populationGrid'),
             logPanel: document.getElementById('logPanel')
         };
@@ -485,7 +501,8 @@
         elements.speed.addEventListener('input', (e) => {
             elements.speedValue.textContent = e.target.value;
         });
-        
+
+        elements.btnInit.addEventListener('click', initializeGA);
         elements.btnStart.addEventListener('click', toggleGA);
         elements.btnStep.addEventListener('click', stepGA);
         elements.btnReset.addEventListener('click', resetGA);
@@ -494,12 +511,30 @@
         function initializeGA() {
             const popSize = parseInt(elements.populationSize.value);
             const chromLength = parseInt(elements.chromosomeLength.value);
-            
-            // Generate random target chromosome (all 1s for simplicity - easy to understand)
-            targetChromosome = Array(chromLength).fill(1);
-            
-            // Display target
-            elements.targetChromosome.textContent = targetChromosome.join('');
+            const fitnessFunc = elements.fitnessFunction.value;
+
+            const goal = elements.optimizationGoal.value;
+
+            // Set max fitness based on selected function
+            if (fitnessFunc === 'matchTarget') {
+                // Generate random target chromosome (all 1s for simplicity)
+                targetChromosome = Array(chromLength).fill(1);
+                maxFitness = chromLength;
+            } else {
+                // For mathematical functions, calculate max fitness for chart scaling
+                targetChromosome = null;
+
+                if (fitnessFunc === 'formula1') {
+                    // y = 192 - |x - 64|
+                    maxFitness = 192;
+                } else if (fitnessFunc === 'formula2') {
+                    // y = x²
+                    maxFitness = Math.pow(Math.pow(2, chromLength) - 1, 2);
+                } else if (fitnessFunc === 'formula3') {
+                    // y = sin(x/10) * 100 + 100
+                    maxFitness = 200;
+                }
+            }
             
             // Initialize random population
             population = [];
@@ -525,26 +560,68 @@
             updateDisplay();
             log('Inicijalizirana populacija od ' + popSize + ' hromozoma', 'generation');
             log('Dužina hromozoma: ' + chromLength + ' bita', 'operation');
+            log('Fitness funkcija: ' + elements.fitnessFunction.options[elements.fitnessFunction.selectedIndex].text, 'operation');
+            log('Cilj optimizacije: ' + elements.optimizationGoal.options[elements.optimizationGoal.selectedIndex].text, 'operation');
+
+            // Update button states
+            elements.btnInit.disabled = true;
+            elements.btnStart.disabled = false;
+            elements.btnStep.disabled = false;
         }
         
         function evaluatePopulation() {
+            const goal = elements.optimizationGoal.value;
+
             population.forEach(individual => {
                 individual.fitness = calculateFitness(individual.genes);
             });
-            
-            // Sort by fitness (descending)
-            population.sort((a, b) => b.fitness - a.fitness);
+
+            // Sort by fitness based on optimization goal
+            if (goal === 'maximize') {
+                population.sort((a, b) => b.fitness - a.fitness); // descending
+            } else {
+                population.sort((a, b) => a.fitness - b.fitness); // ascending
+            }
         }
         
-        function calculateFitness(chromosome) {
-            // Count matching bits with target
-            let matches = 0;
+        function decodeChromosome(chromosome) {
+            // Decode chromosome as unsigned integer
+            let x = 0;
             for (let i = 0; i < chromosome.length; i++) {
-                if (chromosome[i] === targetChromosome[i]) {
-                    matches++;
+                x += chromosome[i] * Math.pow(2, i);
+            }
+            return x;
+        }
+
+        function calculateFitness(chromosome) {
+            const fitnessFunc = elements.fitnessFunction.value;
+
+            if (fitnessFunc === 'matchTarget') {
+                // Count matching bits with target
+                let matches = 0;
+                for (let i = 0; i < chromosome.length; i++) {
+                    if (chromosome[i] === targetChromosome[i]) {
+                        matches++;
+                    }
+                }
+                return matches;
+            } else {
+                // Decode chromosome to unsigned integer value
+                const x = decodeChromosome(chromosome);
+
+                if (fitnessFunc === 'formula1') {
+                    // y = 192 - |x - 64|
+                    return 192 - Math.abs(x - 64);
+                } else if (fitnessFunc === 'formula2') {
+                    // y = x²
+                    return x * x;
+                } else if (fitnessFunc === 'formula3') {
+                    // y = sin(x/10) * 100 + 100
+                    return Math.sin(x / 10) * 100 + 100;
                 }
             }
-            return matches;
+
+            return 0;
         }
         
         function selection() {
@@ -563,21 +640,32 @@
         }
         
         function rouletteSelection() {
-            const totalFitness = population.reduce((sum, ind) => sum + ind.fitness, 0);
+            const goal = elements.optimizationGoal.value;
+            let adjustedFitnesses;
+
+            if (goal === 'minimize') {
+                // For minimization, invert fitness values
+                const maxFit = Math.max(...population.map(ind => ind.fitness));
+                adjustedFitnesses = population.map(ind => maxFit - ind.fitness + 1);
+            } else {
+                adjustedFitnesses = population.map(ind => ind.fitness);
+            }
+
+            const totalFitness = adjustedFitnesses.reduce((sum, f) => sum + f, 0);
             if (totalFitness === 0) {
                 return population[Math.floor(Math.random() * population.length)];
             }
-            
+
             let random = Math.random() * totalFitness;
             let cumulative = 0;
-            
-            for (const individual of population) {
-                cumulative += individual.fitness;
+
+            for (let i = 0; i < population.length; i++) {
+                cumulative += adjustedFitnesses[i];
                 if (cumulative >= random) {
-                    return individual;
+                    return population[i];
                 }
             }
-            
+
             return population[population.length - 1];
         }
         
@@ -606,16 +694,24 @@
         }
         
         function tournamentSelection() {
+            const goal = elements.optimizationGoal.value;
             const tournamentSize = 3;
             let best = null;
-            
+
             for (let i = 0; i < tournamentSize; i++) {
                 const candidate = population[Math.floor(Math.random() * population.length)];
-                if (!best || candidate.fitness > best.fitness) {
+                if (!best) {
                     best = candidate;
+                } else {
+                    // Compare based on optimization goal
+                    if (goal === 'maximize' && candidate.fitness > best.fitness) {
+                        best = candidate;
+                    } else if (goal === 'minimize' && candidate.fitness < best.fitness) {
+                        best = candidate;
+                    }
                 }
             }
-            
+
             return best;
         }
         
@@ -756,14 +852,8 @@
             fitnessHistory.avg.push(avgFit);
             
             updateDisplay();
-            
-            // Check termination conditions
-            if (bestFit === targetChromosome.length) {
-                stopGA();
-                log('🎉 Optimalno rješenje pronađeno u generaciji ' + generation + '!', 'generation');
-                return false;
-            }
-            
+
+            // Check termination condition (only max generations)
             if (generation >= parseInt(elements.maxGenerations.value)) {
                 stopGA();
                 log('Dostignut maksimalni broj generacija', 'generation');
@@ -781,7 +871,7 @@
                 const bestFit = population[0].fitness;
                 const avgFit = (population.reduce((sum, ind) => sum + ind.fitness, 0) / population.length).toFixed(2);
                 
-                elements.bestFitness.textContent = bestFit + '/' + targetChromosome.length;
+                elements.bestFitness.textContent = bestFit.toFixed(1);
                 elements.avgFitness.textContent = avgFit;
                 
                 // Calculate diversity (unique chromosomes)
@@ -799,6 +889,7 @@
         
         function updatePopulationGrid() {
             elements.populationGrid.innerHTML = '';
+            const fitnessFunc = elements.fitnessFunction.value;
             
             population.forEach((individual, index) => {
                 const card = document.createElement('div');
@@ -812,16 +903,32 @@
                 
                 // Create chromosome string with highlighting
                 let genesHTML = '';
-                for (let i = 0; i < individual.genes.length; i++) {
-                    const bit = individual.genes[i];
-                    const isMatch = bit === targetChromosome[i];
-                    genesHTML += `<span class="${isMatch ? 'bit-match' : 'bit-mismatch'}">${bit}</span>`;
+                
+                if (fitnessFunc === 'matchTarget' && targetChromosome) {
+                    for (let i = 0; i < individual.genes.length; i++) {
+                        const bit = individual.genes[i];
+                        const isMatch = bit === targetChromosome[i];
+                        genesHTML += `<span class="${isMatch ? 'bit-match' : 'bit-mismatch'}">${bit}</span>`;
+                    }
+                } else {
+                    // For mathematical functions, just show the bits
+                    genesHTML = individual.genes.join('');
+                }
+                
+                // Decode x value for mathematical functions
+                const xValue = decodeChromosome(individual.genes);
+
+                let fitnessDisplay = '';
+                if (fitnessFunc === 'matchTarget') {
+                    fitnessDisplay = `Fitness: ${individual.fitness}/${targetChromosome.length}`;
+                } else {
+                    fitnessDisplay = `x=${xValue}, y=${individual.fitness.toFixed(1)}`;
                 }
                 
                 card.innerHTML = `
                     <div class="chromosome-header">
                         <span class="chromosome-id">#${index + 1}${index === 0 ? ' 👑' : ''}</span>
-                        <span class="chromosome-fitness">Fitness: ${individual.fitness}/${targetChromosome.length}</span>
+                        <span class="chromosome-fitness">${fitnessDisplay}</span>
                     </div>
                     <div class="chromosome-string">${genesHTML}</div>
                 `;
@@ -833,16 +940,20 @@
         function drawChart() {
             const width = canvas.width = canvas.parentElement.clientWidth - 30;
             const height = canvas.height = canvas.parentElement.clientHeight - 30;
-            
+
             ctx.clearRect(0, 0, width, height);
-            
+
             if (fitnessHistory.best.length < 2) return;
-            
-            const maxFitness = targetChromosome.length;
+
+            const chartMaxFitness = maxFitness;
             const padding = 40;
             const chartWidth = width - padding * 2;
             const chartHeight = height - padding * 2;
-            
+
+            // Use max generations for x-axis scale instead of current history length
+            const maxGens = parseInt(elements.maxGenerations.value);
+            const xStep = chartWidth / maxGens;
+
             // Draw axes
             ctx.strokeStyle = '#ddd';
             ctx.lineWidth = 1;
@@ -851,33 +962,31 @@
             ctx.lineTo(padding, height - padding);
             ctx.lineTo(width - padding, height - padding);
             ctx.stroke();
-            
+
             // Draw labels
             ctx.fillStyle = '#666';
             ctx.font = '10px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText('Generacija', width / 2, height - 5);
-            
+
             ctx.save();
             ctx.translate(10, height / 2);
             ctx.rotate(-Math.PI / 2);
             ctx.fillText('Fitness', 0, 0);
             ctx.restore();
-            
+
             // Draw best fitness line
-            const xStep = chartWidth / (fitnessHistory.best.length - 1);
-            
             ctx.strokeStyle = '#667eea';
             ctx.lineWidth = 2;
             ctx.beginPath();
             fitnessHistory.best.forEach((fitness, i) => {
                 const x = padding + i * xStep;
-                const y = height - padding - (fitness / maxFitness) * chartHeight;
+                const y = height - padding - (fitness / chartMaxFitness) * chartHeight;
                 if (i === 0) ctx.moveTo(x, y);
                 else ctx.lineTo(x, y);
             });
             ctx.stroke();
-            
+
             // Draw average fitness line
             ctx.strokeStyle = '#28a745';
             ctx.lineWidth = 1;
@@ -885,20 +994,20 @@
             ctx.beginPath();
             fitnessHistory.avg.forEach((fitness, i) => {
                 const x = padding + i * xStep;
-                const y = height - padding - (fitness / maxFitness) * chartHeight;
+                const y = height - padding - (fitness / chartMaxFitness) * chartHeight;
                 if (i === 0) ctx.moveTo(x, y);
                 else ctx.lineTo(x, y);
             });
             ctx.stroke();
             ctx.setLineDash([]);
-            
+
             // Legend
             ctx.fillStyle = '#667eea';
             ctx.fillRect(width - 120, 10, 10, 10);
             ctx.fillStyle = '#333';
             ctx.textAlign = 'left';
             ctx.fillText('Najbolji', width - 105, 19);
-            
+
             ctx.fillStyle = '#28a745';
             ctx.fillRect(width - 120, 25, 10, 10);
             ctx.fillStyle = '#333';
@@ -923,9 +1032,6 @@
         
         function toggleGA() {
             if (!isRunning) {
-                if (generation === 0) {
-                    initializeGA();
-                }
                 startGA();
             } else {
                 stopGA();
@@ -964,9 +1070,6 @@
         }
         
         function stepGA() {
-            if (generation === 0) {
-                initializeGA();
-            }
             evolve();
             log('Izvršen jedan korak evolucije', 'operation');
         }
@@ -976,19 +1079,20 @@
             generation = 0;
             population = [];
             fitnessHistory = { best: [], avg: [] };
-            
+
             elements.currentGen.textContent = '0';
             elements.bestFitness.textContent = '0';
             elements.avgFitness.textContent = '0';
             elements.diversity.textContent = '100%';
-            elements.targetChromosome.textContent = '-';
-            elements.populationGrid.innerHTML = '<p style="text-align: center; color: #666;">Kliknite "Pokreni GA" za početak</p>';
+            elements.populationGrid.innerHTML = '<p style="text-align: center; color: #666;">Kliknite "Inicijaliziraj populaciju" za početak</p>';
+            elements.btnInit.disabled = false;
             elements.btnStart.textContent = '▶ Pokreni GA';
-            elements.btnStep.disabled = false;
-            
+            elements.btnStart.disabled = true;
+            elements.btnStep.disabled = true;
+
             // Clear chart
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
+
             // Clear log
             elements.logPanel.innerHTML = '<div class="log-entry">GA resetiran. Spreman za novi pokušaj.</div>';
         }
@@ -997,7 +1101,7 @@
         window.addEventListener('resize', drawChart);
     </script>
     
-    <footer style="text-align: center; padding: 15px; margin-top: 20px; background-color: #2c3e50; color: white; font-size: 14px; border-radius: 5px;">
+    <footer style="text-align: center; padding: 15px; margin: 20px auto 0; background-color: #2c3e50; color: white; font-size: 14px; border-radius: 5px; max-width: 1400px;">
         Optimizacija resursa, Red. prof. dr Samim Konjicija, 2025. godina
     </footer>
 </body>
