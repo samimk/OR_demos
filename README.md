@@ -144,9 +144,10 @@ Interaktivna web aplikacija za **poređenje mehanizama selekcije** u GA:
   - **Ruletski točak (RWS)** - proporcionalno fitnessu
   - **Rangiranje (Ranking)** - bazirano na rangu, ne fitnessu
   - **Turnirska selekcija (Tournament)** - k-turniri sa vjerovatnoćom p
+- Odabir mehanizama za prikaz putem checkboxova
 - Konfigurisanje parametara za svaki mehanizam
 - Vizualizacija vjerovatnoća selekcije:
-  - Bar chart za direktno poređenje svih metoda
+  - Bar chart za direktno poređenje odabranih metoda
   - Pie chart za svaki mehanizam pojedinačno
 - Prikaz sortrane populacije sa fitness vrijednostima i rangovima
 - Idealan alat za razumijevanje razlika između metoda selekcije

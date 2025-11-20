@@ -280,7 +280,28 @@
                 </div>
                 
                 <button class="btn btn-primary" id="btnInitialize">🔄 Inicijaliziraj populaciju</button>
-                
+
+                <div class="section-title">Mehanizmi za poređenje</div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                        <input type="checkbox" id="showTruncation" checked style="margin-right: 8px; cursor: pointer;">
+                        <span>Skraćivanje (Truncation)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                        <input type="checkbox" id="showRWS" checked style="margin-right: 8px; cursor: pointer;">
+                        <span>Ruletski točak (RWS)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                        <input type="checkbox" id="showRanking" checked style="margin-right: 8px; cursor: pointer;">
+                        <span>Rangiranje (Ranking)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                        <input type="checkbox" id="showTournament" checked style="margin-right: 8px; cursor: pointer;">
+                        <span>Turnirska selekcija</span>
+                    </label>
+                </div>
+
                 <div class="section-title">Parametri selekcije</div>
                 
                 <div class="control-group">
@@ -411,12 +432,42 @@
             pieTruncation: document.getElementById('pieTruncation'),
             pieRWS: document.getElementById('pieRWS'),
             pieRanking: document.getElementById('pieRanking'),
-            pieTournament: document.getElementById('pieTournament')
+            pieTournament: document.getElementById('pieTournament'),
+            showTruncation: document.getElementById('showTruncation'),
+            showRWS: document.getElementById('showRWS'),
+            showRanking: document.getElementById('showRanking'),
+            showTournament: document.getElementById('showTournament')
         };
         
         // Event Listeners
         elements.btnInitialize.addEventListener('click', initializePopulation);
         elements.btnCalculate.addEventListener('click', calculateSelectionProbabilities);
+
+        // Checkbox listeners to redraw charts when selection changes
+        elements.showTruncation.addEventListener('change', () => {
+            if (selectionProbabilities.truncation.length > 0) {
+                drawBarChart();
+                drawPieCharts();
+            }
+        });
+        elements.showRWS.addEventListener('change', () => {
+            if (selectionProbabilities.rws.length > 0) {
+                drawBarChart();
+                drawPieCharts();
+            }
+        });
+        elements.showRanking.addEventListener('change', () => {
+            if (selectionProbabilities.ranking.length > 0) {
+                drawBarChart();
+                drawPieCharts();
+            }
+        });
+        elements.showTournament.addEventListener('change', () => {
+            if (selectionProbabilities.tournament.length > 0) {
+                drawBarChart();
+                drawPieCharts();
+            }
+        });
         
         function initializePopulation() {
             const size = parseInt(elements.populationSize.value);
@@ -567,30 +618,48 @@
         function drawBarChart() {
             const canvas = elements.barChart;
             const ctx = canvas.getContext('2d');
-            
+
             // Set canvas size
             const container = canvas.parentElement;
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
-            
+
             const width = canvas.width;
             const height = canvas.height;
             const padding = { top: 20, right: 20, bottom: 40, left: 50 };
-            
+
             const chartWidth = width - padding.left - padding.right;
             const chartHeight = height - padding.top - padding.bottom;
-            
+
             ctx.clearRect(0, 0, width, height);
-            
+
             const n = population.length;
-            const methods = ['truncation', 'rws', 'ranking', 'tournament'];
-            const methodColors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
-            const barWidth = chartWidth / (n * 5); // 4 bars + 1 gap per individual
+
+            // Filter methods based on checkboxes
+            const allMethods = [
+                { key: 'truncation', color: '#e74c3c', enabled: elements.showTruncation.checked },
+                { key: 'rws', color: '#3498db', enabled: elements.showRWS.checked },
+                { key: 'ranking', color: '#2ecc71', enabled: elements.showRanking.checked },
+                { key: 'tournament', color: '#f39c12', enabled: elements.showTournament.checked }
+            ];
+
+            const activeMethods = allMethods.filter(m => m.enabled);
+
+            if (activeMethods.length === 0) {
+                ctx.fillStyle = '#666';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Odaberite najmanje jedan mehanizam selekcije', width / 2, height / 2);
+                return;
+            }
+
+            const numBars = activeMethods.length;
+            const barWidth = chartWidth / (n * (numBars + 1)); // bars + 1 gap per individual
             
-            // Find max probability for scaling
+            // Find max probability for scaling (only from active methods)
             let maxProb = 0;
-            methods.forEach(method => {
-                selectionProbabilities[method].forEach(p => {
+            activeMethods.forEach(method => {
+                selectionProbabilities[method.key].forEach(p => {
                     if (p > maxProb) maxProb = p;
                 });
             });
@@ -627,22 +696,22 @@
             
             population.forEach((ind, i) => {
                 const groupX = padding.left + i * groupWidth + groupWidth * 0.1;
-                
-                methods.forEach((method, j) => {
-                    const prob = selectionProbabilities[method][i];
+
+                activeMethods.forEach((method, j) => {
+                    const prob = selectionProbabilities[method.key][i];
                     const barHeight = (prob / maxProb) * chartHeight;
                     const x = groupX + j * barWidth;
                     const y = height - padding.bottom - barHeight;
-                    
-                    ctx.fillStyle = methodColors[j];
+
+                    ctx.fillStyle = method.color;
                     ctx.fillRect(x, y, barWidth - 1, barHeight);
                 });
-                
+
                 // X-axis label
                 ctx.fillStyle = '#333';
                 ctx.font = '11px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(ind.id, groupX + barWidth * 2, height - padding.bottom + 15);
+                ctx.fillText(ind.id, groupX + barWidth * (numBars / 2), height - padding.bottom + 15);
             });
             
             // Y-axis title
@@ -661,10 +730,52 @@
         }
         
         function drawPieCharts() {
-            drawPieChart(elements.pieTruncation, selectionProbabilities.truncation);
-            drawPieChart(elements.pieRWS, selectionProbabilities.rws);
-            drawPieChart(elements.pieRanking, selectionProbabilities.ranking);
-            drawPieChart(elements.pieTournament, selectionProbabilities.tournament);
+            // Clear all pie charts first
+            [elements.pieTruncation, elements.pieRWS, elements.pieRanking, elements.pieTournament].forEach(canvas => {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+
+            // Draw only selected pie charts
+            if (elements.showTruncation.checked) {
+                drawPieChart(elements.pieTruncation, selectionProbabilities.truncation);
+            } else {
+                drawDisabledPieChart(elements.pieTruncation);
+            }
+
+            if (elements.showRWS.checked) {
+                drawPieChart(elements.pieRWS, selectionProbabilities.rws);
+            } else {
+                drawDisabledPieChart(elements.pieRWS);
+            }
+
+            if (elements.showRanking.checked) {
+                drawPieChart(elements.pieRanking, selectionProbabilities.ranking);
+            } else {
+                drawDisabledPieChart(elements.pieRanking);
+            }
+
+            if (elements.showTournament.checked) {
+                drawPieChart(elements.pieTournament, selectionProbabilities.tournament);
+            } else {
+                drawDisabledPieChart(elements.pieTournament);
+            }
+        }
+
+        function drawDisabledPieChart(canvas) {
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = 180;
+            canvas.height = 180;
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            ctx.fillStyle = '#ddd';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Onemogućeno', centerX, centerY);
         }
         
         function drawPieChart(canvas, probabilities) {
