@@ -121,6 +121,36 @@ GA specifične opcije:
 - Elitizam
 - Grafički prikaz evolucije fitnessa nakon završetka
 
+#### ga_krojenje.py
+Python/Tkinter aplikacija za demonstraciju **primjene GA na problem krojenja**:
+- Optimizacija krojenja drvenih ploča sa Tetris oblicima
+- Dva načina popunjavanja:
+  - **Slobodno**: Oblici se mogu postaviti bilo gdje
+  - **Gravitacijski**: Oblici moraju biti podržani (na dnu ili na drugim oblicima)
+- Konfigurisanje dimenzija ploče (5-20 × 5-20)
+- Izbor broja komada za svaki oblik (I, O, T, L, J, S, Z)
+- Svi GA parametri (populacija, selekcija, ukrštanje, mutacija, elitizam)
+- Dva kanvasa za vizualizaciju:
+  - Lijevi: Prikaz najboljeg rješenja iz trenutne populacije
+  - Desni: Prikaz odabrane jedinke sa combobox-om za izbor (dropdown ili unos broja)
+- Graf evolucije fitnessa kroz generacije
+- Fitness funkcija sa kaznom za praznine (gravitacijski mod)
+- Help meni sa detaljnim uputstvom i About informacijama
+
+#### selection_comparison.html
+Interaktivna web aplikacija za **poređenje mehanizama selekcije** u GA:
+- Četiri mehanizma selekcije:
+  - **Skraćivanje (Truncation)** - odabir top N% jedinki
+  - **Ruletski točak (RWS)** - proporcionalno fitnessu
+  - **Rangiranje (Ranking)** - bazirano na rangu, ne fitnessu
+  - **Turnirska selekcija (Tournament)** - k-turniri sa vjerovatnoćom p
+- Konfigurisanje parametara za svaki mehanizam
+- Vizualizacija vjerovatnoća selekcije:
+  - Bar chart za direktno poređenje svih metoda
+  - Pie chart za svaki mehanizam pojedinačno
+- Prikaz sortrane populacije sa fitness vrijednostima i rangovima
+- Idealan alat za razumijevanje razlika između metoda selekcije
+
 ---
 
 ## Pokretanje demo aplikacija

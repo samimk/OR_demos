@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poređenje Mehanizama Selekcije</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .control-panel {
+            height: 100%;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .control-group input,
+        .control-group select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .control-group input:focus,
+        .control-group select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .visualization-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .population-table {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .population-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        .population-table th,
+        .population-table td {
+            padding: 6px 8px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .population-table th {
+            background: #667eea;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .chart-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .chart-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .bar-chart {
+            height: 200px;
+            position: relative;
+        }
+        
+        .pie-chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        
+        .pie-chart-container canvas {
+            max-width: 180px;
+            max-height: 180px;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+            font-size: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #333;
+        }
+        
+        .comparison-section {
+            margin-top: 20px;
+        }
+        
+        .bar-chart-wrapper {
+            position: relative;
+            height: 250px;
+            padding: 20px 40px 40px 60px;
+        }
+        
+        .bar-chart-wrapper canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        .method-colors {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        
+        .method-color-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .method-color-box {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Poređenje Mehanizama Selekcije</h1>
+        
+        <div class="main-grid">
+            <!-- Control Panel -->
+            <div class="panel control-panel">
+                <div class="section-title">Parametri populacije</div>
+                
+                <div class="control-group">
+                    <label>Veličina populacije</label>
+                    <input type="number" id="populationSize" value="10" min="4" max="20">
+                </div>
+                
+                <button class="btn btn-primary" id="btnInitialize">🔄 Inicijaliziraj populaciju</button>
+                
+                <div class="section-title">Parametri selekcije</div>
+                
+                <div class="control-group">
+                    <label>Prag skraćivanja (%)</label>
+                    <input type="number" id="truncationThreshold" value="50" min="10" max="90" step="10">
+                </div>
+                
+                <div class="control-group">
+                    <label>Selekcijski pritisak (SP) za rangiranje</label>
+                    <input type="number" id="selectionPressure" value="1.8" min="1.0" max="2.0" step="0.1">
+                </div>
+                
+                <div class="control-group">
+                    <label>Veličina turnira</label>
+                    <input type="number" id="tournamentSize" value="3" min="2" max="10">
+                </div>
+                
+                <div class="control-group">
+                    <label>Vjerovatnoća odabira boljeg u turniru (p<sub>t</sub>)</label>
+                    <input type="number" id="tournamentProb" value="0.8" min="0.5" max="1.0" step="0.05">
+                </div>
+                
+                <button class="btn btn-success" id="btnCalculate" disabled>📈 Izvrši selekciju</button>
+                
+                <div class="info-box">
+                    <strong>Napomena:</strong> Grafici prikazuju vjerovatnoću da svaka jedinka bude odabrana za reprodukciju. Različiti mehanizmi selekcije različito raspoređuju ovu vjerovatnoću.
+                </div>
+            </div>
+            
+            <!-- Visualization Panel -->
+            <div class="panel visualization-panel">
+                <div class="section-title">Populacija (sortirana po fitnessu)</div>
+                <div class="population-table" id="populationTable">
+                    <p style="text-align: center; color: #666; padding: 20px;">
+                        Kliknite "Inicijaliziraj populaciju" za početak
+                    </p>
+                </div>
+                
+                <div class="section-title">Poređenje vjerovatnoća selekcije (Bar Chart)</div>
+                <div class="chart-container">
+                    <div class="bar-chart-wrapper">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                    <div class="method-colors">
+                        <div class="method-color-item">
+                            <div class="method-color-box" style="background: #e74c3c;"></div>
+                            <span>Skraćivanje</span>
+                        </div>
+                        <div class="method-color-item">
+                            <div class="method-color-box" style="background: #3498db;"></div>
+                            <span>RWS</span>
+                        </div>
+                        <div class="method-color-item">
+                            <div class="method-color-box" style="background: #2ecc71;"></div>
+                            <span>Rangiranje</span>
+                        </div>
+                        <div class="method-color-item">
+                            <div class="method-color-box" style="background: #f39c12;"></div>
+                            <span>Turnir</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section-title">Distribucija vjerovatnoća (Pie Charts)</div>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">Selekcija skraćivanjem</div>
+                        <div class="pie-chart-container">
+                            <canvas id="pieTruncation"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Ruletski točak (RWS)</div>
+                        <div class="pie-chart-container">
+                            <canvas id="pieRWS"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Selekcija rangiranjem</div>
+                        <div class="pie-chart-container">
+                            <canvas id="pieRanking"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Turnirska selekcija</div>
+                        <div class="pie-chart-container">
+                            <canvas id="pieTournament"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer style="text-align: center; padding: 15px; margin-top: 20px; background-color: #2c3e50; color: white; font-size: 14px; border-radius: 5px;">
+            Optimizacija resursa, Red. prof. dr Samim Konjicija, 2025. godina
+        </footer>
+    </div>
+
+    <script>
+        // State
+        let population = [];
+        let selectionProbabilities = {
+            truncation: [],
+            rws: [],
+            ranking: [],
+            tournament: []
+        };
+        
+        // Colors for individuals
+        const colors = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+            '#FF9F40', '#FF6384', '#C9CBCF', '#7BC225', '#B91D47',
+            '#00ABA9', '#E81123', '#A200FF', '#F7630C', '#16C60C',
+            '#0078D7', '#8E562E', '#FFF100', '#FF4343', '#9A0089'
+        ];
+        
+        // DOM Elements
+        const elements = {
+            populationSize: document.getElementById('populationSize'),
+            truncationThreshold: document.getElementById('truncationThreshold'),
+            selectionPressure: document.getElementById('selectionPressure'),
+            tournamentSize: document.getElementById('tournamentSize'),
+            tournamentProb: document.getElementById('tournamentProb'),
+            btnInitialize: document.getElementById('btnInitialize'),
+            btnCalculate: document.getElementById('btnCalculate'),
+            populationTable: document.getElementById('populationTable'),
+            barChart: document.getElementById('barChart'),
+            pieTruncation: document.getElementById('pieTruncation'),
+            pieRWS: document.getElementById('pieRWS'),
+            pieRanking: document.getElementById('pieRanking'),
+            pieTournament: document.getElementById('pieTournament')
+        };
+        
+        // Event Listeners
+        elements.btnInitialize.addEventListener('click', initializePopulation);
+        elements.btnCalculate.addEventListener('click', calculateSelectionProbabilities);
+        
+        function initializePopulation() {
+            const size = parseInt(elements.populationSize.value);
+            
+            // Generate random fitness values
+            population = [];
+            for (let i = 0; i < size; i++) {
+                population.push({
+                    id: String.fromCharCode(65 + i), // A, B, C, ...
+                    fitness: Math.floor(Math.random() * 10001) // 0-10000
+                });
+            }
+            
+            // Sort by fitness (descending)
+            population.sort((a, b) => b.fitness - a.fitness);
+            
+            // Assign ranks
+            population.forEach((ind, index) => {
+                ind.rank = index + 1;
+            });
+            
+            // Update table
+            updatePopulationTable();
+            
+            // Enable calculate button
+            elements.btnCalculate.disabled = false;
+            
+            // Clear previous charts
+            clearCharts();
+        }
+        
+        function updatePopulationTable() {
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hromozom</th>
+                            <th>Fitness</th>
+                            <th>Rang</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            population.forEach(ind => {
+                html += `
+                    <tr>
+                        <td><strong>${ind.id}</strong></td>
+                        <td>${ind.fitness}</td>
+                        <td>${ind.rank}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            elements.populationTable.innerHTML = html;
+        }
+        
+        function calculateSelectionProbabilities() {
+            const truncThreshold = parseInt(elements.truncationThreshold.value) / 100;
+            const SP = parseFloat(elements.selectionPressure.value);
+            const tournSize = parseInt(elements.tournamentSize.value);
+            const tournProb = parseFloat(elements.tournamentProb.value);
+            
+            const n = population.length;
+            
+            // 1. Truncation Selection
+            const numSelected = Math.max(1, Math.floor(n * truncThreshold));
+            selectionProbabilities.truncation = population.map((ind, index) => {
+                return index < numSelected ? 1 / numSelected : 0;
+            });
+            
+            // 2. Roulette Wheel Selection (RWS)
+            const totalFitness = population.reduce((sum, ind) => sum + ind.fitness, 0);
+            if (totalFitness === 0) {
+                selectionProbabilities.rws = population.map(() => 1 / n);
+            } else {
+                selectionProbabilities.rws = population.map(ind => ind.fitness / totalFitness);
+            }
+            
+            // 3. Ranking Selection
+            selectionProbabilities.ranking = population.map((ind, index) => {
+                const rank = n - index; // Best has highest rank
+                const fmod = (2 - SP) + 2 * (SP - 1) * (rank - 1) / (n - 1);
+                return fmod;
+            });
+            // Normalize ranking probabilities
+            const totalRanking = selectionProbabilities.ranking.reduce((sum, p) => sum + p, 0);
+            selectionProbabilities.ranking = selectionProbabilities.ranking.map(p => p / totalRanking);
+            
+            // 4. Tournament Selection (approximate probability)
+            // P(selecting individual i) = sum over all possible tournaments of P(i wins)
+            selectionProbabilities.tournament = calculateTournamentProbabilities(n, tournSize, tournProb);
+            
+            // Draw charts
+            drawBarChart();
+            drawPieCharts();
+        }
+        
+        function calculateTournamentProbabilities(n, k, p) {
+            // Approximate tournament selection probabilities
+            // For each individual, estimate probability of being selected
+            const probs = [];
+            const numSimulations = 10000;
+            const counts = new Array(n).fill(0);
+            
+            for (let sim = 0; sim < numSimulations; sim++) {
+                // Select k random individuals for tournament
+                const tournament = [];
+                const available = [...Array(n).keys()];
+                
+                for (let i = 0; i < k; i++) {
+                    const randIndex = Math.floor(Math.random() * available.length);
+                    tournament.push(available[randIndex]);
+                    available.splice(randIndex, 1);
+                }
+                
+                // Sort tournament participants by rank (lower index = better)
+                tournament.sort((a, b) => a - b);
+                
+                // Select winner based on probability
+                let winner = tournament[tournament.length - 1]; // Default to worst
+                for (let i = 0; i < tournament.length; i++) {
+                    if (Math.random() < p) {
+                        winner = tournament[i];
+                        break;
+                    }
+                }
+                
+                counts[winner]++;
+            }
+            
+            return counts.map(c => c / numSimulations);
+        }
+        
+        function clearCharts() {
+            // Clear bar chart
+            const barCtx = elements.barChart.getContext('2d');
+            barCtx.clearRect(0, 0, elements.barChart.width, elements.barChart.height);
+            
+            // Clear pie charts
+            [elements.pieTruncation, elements.pieRWS, elements.pieRanking, elements.pieTournament].forEach(canvas => {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+        }
+        
+        function drawBarChart() {
+            const canvas = elements.barChart;
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+            
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            const n = population.length;
+            const methods = ['truncation', 'rws', 'ranking', 'tournament'];
+            const methodColors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
+            const barWidth = chartWidth / (n * 5); // 4 bars + 1 gap per individual
+            
+            // Find max probability for scaling
+            let maxProb = 0;
+            methods.forEach(method => {
+                selectionProbabilities[method].forEach(p => {
+                    if (p > maxProb) maxProb = p;
+                });
+            });
+            maxProb = Math.max(maxProb, 0.1); // Minimum scale
+            
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top);
+            ctx.lineTo(padding.left, height - padding.bottom);
+            ctx.lineTo(width - padding.right, height - padding.bottom);
+            ctx.stroke();
+            
+            // Draw y-axis labels
+            ctx.fillStyle = '#666';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                const value = (maxProb * i / 5).toFixed(2);
+                const y = height - padding.bottom - (i / 5) * chartHeight;
+                ctx.fillText(value, padding.left - 5, y + 3);
+                
+                // Grid line
+                ctx.strokeStyle = '#eee';
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(width - padding.right, y);
+                ctx.stroke();
+            }
+            
+            // Draw bars
+            const groupWidth = chartWidth / n;
+            
+            population.forEach((ind, i) => {
+                const groupX = padding.left + i * groupWidth + groupWidth * 0.1;
+                
+                methods.forEach((method, j) => {
+                    const prob = selectionProbabilities[method][i];
+                    const barHeight = (prob / maxProb) * chartHeight;
+                    const x = groupX + j * barWidth;
+                    const y = height - padding.bottom - barHeight;
+                    
+                    ctx.fillStyle = methodColors[j];
+                    ctx.fillRect(x, y, barWidth - 1, barHeight);
+                });
+                
+                // X-axis label
+                ctx.fillStyle = '#333';
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(ind.id, groupX + barWidth * 2, height - padding.bottom + 15);
+            });
+            
+            // Y-axis title
+            ctx.save();
+            ctx.translate(12, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#333';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('Vjerovatnoća selekcije', 0, 0);
+            ctx.restore();
+            
+            // X-axis title
+            ctx.textAlign = 'center';
+            ctx.fillText('Hromozom', width / 2, height - 5);
+        }
+        
+        function drawPieCharts() {
+            drawPieChart(elements.pieTruncation, selectionProbabilities.truncation);
+            drawPieChart(elements.pieRWS, selectionProbabilities.rws);
+            drawPieChart(elements.pieRanking, selectionProbabilities.ranking);
+            drawPieChart(elements.pieTournament, selectionProbabilities.tournament);
+        }
+        
+        function drawPieChart(canvas, probabilities) {
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = 180;
+            canvas.height = 180;
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 10;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            let startAngle = -Math.PI / 2; // Start from top
+            
+            probabilities.forEach((prob, i) => {
+                if (prob > 0) {
+                    const sliceAngle = prob * 2 * Math.PI;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+                    ctx.closePath();
+                    
+                    ctx.fillStyle = colors[i % colors.length];
+                    ctx.fill();
+                    
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    // Draw label for significant slices
+                    if (prob > 0.05) {
+                        const midAngle = startAngle + sliceAngle / 2;
+                        const labelRadius = radius * 0.7;
+                        const labelX = centerX + Math.cos(midAngle) * labelRadius;
+                        const labelY = centerY + Math.sin(midAngle) * labelRadius;
+                        
+                        ctx.fillStyle = 'white';
+                        ctx.font = 'bold 10px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(population[i].id, labelX, labelY);
+                    }
+                    
+                    startAngle += sliceAngle;
+                }
+            });
+            
+            // Draw center circle for donut effect
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.3, 0, 2 * Math.PI);
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fill();
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (selectionProbabilities.rws.length > 0) {
+                drawBarChart();
+            }
+        });
+    </script>
+</body>
+</html>
